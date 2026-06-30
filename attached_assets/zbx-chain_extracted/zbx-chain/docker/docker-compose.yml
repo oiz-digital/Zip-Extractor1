@@ -1,0 +1,56 @@
+version: "3.9"
+
+services:
+  validator:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: zebvix/node:latest
+    container_name: zbx-validator
+    restart: unless-stopped
+    volumes:
+      - zbx-data:/home/zbx/.zbx
+      - ./config/validator.toml:/home/zbx/.zbx/config.toml:ro
+    ports:
+      - "30303:30303/tcp"
+      - "30303:30303/udp"
+      - "8545:8545"
+      - "8546:8546"
+      - "9090:9090"
+    environment:
+      RUST_LOG: "info,zbx_consensus=debug"
+    networks:
+      - zbx-net
+
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: zbx-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9091:9090"
+    networks:
+      - zbx-net
+
+  grafana:
+    image: grafana/grafana:10.3.0
+    container_name: zbx-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: "zebvix"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
+    networks:
+      - zbx-net
+
+volumes:
+  zbx-data:
+  grafana-data:
+
+networks:
+  zbx-net:
+    driver: bridge

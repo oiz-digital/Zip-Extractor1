@@ -1,0 +1,41 @@
+[Unit]
+Description=Zebvix Chain — Mainnet Node
+Documentation=https://docs.zbx.io
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=zbx
+Group=zbx
+WorkingDirectory=/opt/zbx
+ExecStart=/usr/local/bin/zbx-node \
+    --network mainnet \
+    --config /etc/zbx/mainnet.toml \
+    --bind-addr 127.0.0.1
+EnvironmentFile=-/etc/zbx/mainnet.env
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=65536
+LimitNPROC=4096
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=zbx-mainnet
+
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/zbx-mainnet /var/log/zbx
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictNamespaces=true
+RestrictRealtime=true
+LockPersonality=true
+MemoryDenyWriteExecute=false
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target

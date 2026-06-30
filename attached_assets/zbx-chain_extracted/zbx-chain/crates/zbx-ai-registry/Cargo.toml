@@ -1,0 +1,13 @@
+[package]
+name        = "zbx-ai-registry"
+version     = "1.0.0"
+edition     = "2021"
+description = "ZBX Chain AI Model Registry — on-chain registry, ZBX token billing, ZK inference proof, governance (Session 42)"
+
+[dependencies]
+zbx-ai-precompile = { path = "../zbx-ai-precompile" }
+zbx-types         = { path = "../zbx-types" }
+thiserror = "1"
+serde     = { version = "1", features = ["derive"] }
+tracing   = "0.1"
+sha3      = "0.10"

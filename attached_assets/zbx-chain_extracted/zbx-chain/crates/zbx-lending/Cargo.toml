@@ -1,0 +1,13 @@
+[package]
+name = "zbx-lending"
+version = "0.1.0"
+edition = "2021"
+description = "On-chain lending and borrowing protocol for Zebvix Chain."
+
+[dependencies]
+zbx-types    = { path = "../zbx-types" }
+zbx-oracle   = { path = "../zbx-oracle" }
+zbx-evm      = { path = "../zbx-evm" }
+serde        = { version = "1", features = ["derive"] }
+thiserror    = "1"
+anyhow       = "1"

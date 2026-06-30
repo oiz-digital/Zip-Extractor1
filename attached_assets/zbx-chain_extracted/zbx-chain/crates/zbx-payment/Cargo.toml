@@ -1,0 +1,16 @@
+[package]
+name = "zbx-payment"
+version = "0.1.0"
+edition = "2021"
+description = "Crypto payment gateway for Zebvix Chain: merchant registry, invoices, multi-token routing."
+
+[dependencies]
+zbx-types    = { path = "../zbx-types" }
+zbx-crypto   = { path = "../zbx-crypto" }
+zbx-evm      = { path = "../zbx-evm" }
+zbx-storage  = { path = "../zbx-storage" }
+zbx-oracle   = { path = "../zbx-oracle" }
+serde        = { version = "1", features = ["derive"] }
+serde_json   = "1"
+hex          = "0.4"
+anyhow       = "1"

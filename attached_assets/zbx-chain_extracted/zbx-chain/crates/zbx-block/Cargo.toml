@@ -1,0 +1,16 @@
+[package]
+name = "zbx-block"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+zbx-primitives = { path = "../zbx-primitives" }
+zbx-crypto     = { path = "../zbx-crypto" }
+zbx-tx         = { path = "../zbx-tx" }
+# N-03 fix (S54): required for bidirectional block-header type conversions
+zbx-types      = { path = "../zbx-types" }
+serde          = { version = "1", features = ["derive"] }
+serde-big-array = "0.5"
+sha3           = "0.10"
+hex            = "0.4"
+thiserror      = "1"

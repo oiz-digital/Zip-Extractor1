@@ -1,0 +1,23 @@
+[package]
+name = "zbx-bridge"
+version = "0.2.0"
+edition = "2021"
+authors = ["Zebvix Technologies Pvt Ltd"]
+description = "Cross-chain bridge for Zebvix — Ethereum, BSC, and Polygon asset bridging"
+license = "MIT"
+
+[dependencies]
+hex = "0.4"
+sha3 = "0.10"   # keccak256 for cross-chain unlock leaf (AUDIT C-15).
+zbx-types   = { path = "../zbx-types" }
+zbx-crypto  = { path = "../zbx-crypto" }
+zbx-storage = { path = "../zbx-storage" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "1"
+tracing = "0.1"
+tokio = { version = "1", features = ["sync", "time"] }
+parking_lot = "0.12"
+
+[dev-dependencies]
+zbx-crypto = { path = "../zbx-crypto", features = ["testing"] }

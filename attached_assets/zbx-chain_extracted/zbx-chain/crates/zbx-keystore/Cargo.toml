@@ -1,0 +1,38 @@
+[package]
+name    = "zbx-keystore"
+version = "0.1.0"
+edition = "2021"
+description = "Encrypted keystore for ZBX Chain validator and account key management (Ethereum v3 JSON, scrypt + AES-128-CTR)"
+
+[dependencies]
+thiserror  = { workspace = true }
+serde      = { workspace = true }
+serde_json = { workspace = true }
+sha3       = { workspace = true }
+sha2       = { workspace = true }
+hex        = { workspace = true }
+rand       = { workspace = true }
+zeroize    = { workspace = true }
+
+# Real keystore decrypt: AES-128-CTR + scrypt + (optional) PBKDF2-HMAC-SHA256.
+aes        = "0.8"
+ctr        = "0.9"
+scrypt     = { version = "0.11", default-features = false, features = ["std"] }
+pbkdf2     = { version = "0.12", default-features = false, features = ["hmac"] }
+hmac       = "0.12"
+
+# Task #12: structured logging from secure_write / tighten_dir.
+tracing    = "0.1"
+
+# Real ECDSA signing for unlocked wallets.
+zbx-crypto = { path = "../zbx-crypto" }
+zbx-types  = { path = "../zbx-types" }
+# Transaction signing: TxSigner::sign_transaction.
+zbx-tx     = { path = "../zbx-tx" }
+
+# Task #17: O_NOFOLLOW symlink-attack hardening on secure_write.
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[dev-dependencies]
+tempfile   = "3"

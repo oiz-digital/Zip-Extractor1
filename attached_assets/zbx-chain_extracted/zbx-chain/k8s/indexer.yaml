@@ -1,0 +1,91 @@
+# ZBX Chain Block Indexer (Kubernetes)
+# Indexes blocks, transactions, logs, and tokens for the Explorer API.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zbx-indexer
+  namespace: zbx-chain
+  labels:
+    app: zbx-indexer
+    component: data-indexing
+spec:
+  replicas: 1     # Only 1 replica (stateful, maintains cursor)
+  selector:
+    matchLabels:
+      app: zbx-indexer
+  template:
+    metadata:
+      labels:
+        app: zbx-indexer
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9092"
+    spec:
+      containers:
+        - name: indexer
+          image: zbvix/zbx-indexer:0.1.0
+          ports:
+            - containerPort: 8560   # REST API (for Explorer)
+            - containerPort: 9092   # Prometheus metrics
+          env:
+            - name: ZBX_RPC
+              value: "http://zbx-archive:8545"  # Use archive node
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: zbx-secrets
+                  key: indexer-db-url
+            - name: START_BLOCK
+              value: "0"
+            - name: BATCH_SIZE
+              value: "100"
+            - name: RUST_LOG
+              value: "zbx_indexer=info"
+          resources:
+            requests:
+              cpu: "2"
+              memory: "4Gi"
+            limits:
+              cpu: "8"
+              memory: "16Gi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8560
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          volumeMounts:
+            - name: indexer-state
+              mountPath: /data/indexer
+      volumes:
+        - name: indexer-state
+          persistentVolumeClaim:
+            claimName: indexer-state-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zbx-indexer
+  namespace: zbx-chain
+spec:
+  selector:
+    app: zbx-indexer
+  ports:
+    - name: api
+      port: 8560
+      targetPort: 8560
+    - name: metrics
+      port: 9092
+      targetPort: 9092
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: indexer-state-pvc
+  namespace: zbx-chain
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 500Gi
+  storageClassName: ssd

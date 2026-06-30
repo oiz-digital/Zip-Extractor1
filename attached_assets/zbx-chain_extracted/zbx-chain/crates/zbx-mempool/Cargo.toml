@@ -1,0 +1,15 @@
+[package]
+name = "zbx-mempool"
+version = "0.2.0"
+edition = "2021"
+authors = ["Zebvix Technologies Pvt Ltd"]
+description = "Transaction mempool for Zebvix with gas-price priority ordering"
+license = "MIT"
+
+[dependencies]
+hex = "0.4"
+zbx-types = { path = "../zbx-types" }
+zbx-crypto = { path = "../zbx-crypto" }
+serde = { version = "1", features = ["derive"] }
+thiserror = "1"
+tracing = "0.1"

@@ -1,0 +1,117 @@
+version: "3.9"
+
+# =============================================================================
+# ZBX Chain — Production Docker Compose
+# Chain ID: 8989  |  Zebvix Chain
+#
+# Usage:
+#   1. Fill in .env file (copy from .env.example)
+#   2. Place validator keys in ./keys/
+#   3. Fill genesis: bash deploy/genesis-fill.sh
+#   4. docker compose -f deploy/docker-compose.production.yml up -d
+# =============================================================================
+
+services:
+
+  # ── ZBX Validator Node ────────────────────────────────────────────────────
+  validator:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: zebvix/node:mainnet
+    container_name: zbx-mainnet
+    restart: unless-stopped
+    volumes:
+      - zbx-data:/var/lib/zbx/mainnet
+      - ./mainnet.production.toml:/etc/zbx/mainnet.toml:ro
+      - ./mainnet-genesis.template.json:/etc/zbx/mainnet-genesis.json:ro
+      - ${KEYS_DIR:-./keys}:/etc/zbx/keys:ro
+    ports:
+      - "30303:30303/tcp"
+      - "30303:30303/udp"
+    expose:
+      - "8545"
+      - "8546"
+      - "9100"
+    environment:
+      RUST_LOG: "info,zbx_consensus=debug"
+      ZBX_NETWORK: mainnet
+    networks:
+      - zbx-internal
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-X", "POST",
+             "-H", "Content-Type: application/json",
+             "-d", '{"jsonrpc":"2.0","id":1,"method":"eth_chainId","params":[]}',
+             "http://127.0.0.1:8545/"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+
+  # ── nginx Reverse Proxy (TLS termination) ─────────────────────────────────
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: zbx-nginx
+    restart: unless-stopped
+    depends_on:
+      - validator
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ../deploy/nginx/zbx-rpc.conf:/etc/nginx/conf.d/zbx-rpc.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /var/www/letsencrypt:/var/www/letsencrypt
+    networks:
+      - zbx-internal
+      - zbx-public
+
+  # ── Prometheus (metrics collection) ───────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: zbx-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=30d"
+      - "--web.listen-address=127.0.0.1:9090"
+    networks:
+      - zbx-internal
+
+  # ── Grafana (monitoring dashboard) ───────────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.3.0
+    container_name: zbx-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER:     "${GRAFANA_USER:-admin}"
+      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_PASSWORD:-CHANGE_ME}"
+      GF_SERVER_HTTP_ADDR:        "127.0.0.1"
+      GF_SERVER_HTTP_PORT:        "3000"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    networks:
+      - zbx-internal
+    depends_on:
+      - prometheus
+
+volumes:
+  zbx-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+
+networks:
+  zbx-internal:
+    driver: bridge
+    internal: true
+  zbx-public:
+    driver: bridge

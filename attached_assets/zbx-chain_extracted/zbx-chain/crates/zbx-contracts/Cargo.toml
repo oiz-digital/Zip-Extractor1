@@ -1,0 +1,16 @@
+[package]
+name = "zbx-contracts"
+version = "0.1.0"
+edition = "2021"
+description = "Built-in system contracts for Zebvix Chain."
+
+[dependencies]
+zbx-types    = { path = "../zbx-types" }
+zbx-state    = { path = "../zbx-state" }
+zbx-evm      = { path = "../zbx-evm" }
+anyhow       = "1"
+serde        = { version = "1", features = ["derive"] }
+thiserror    = "1"
+tracing      = "0.1"
+hex          = "0.4"
+sha3         = "0.10"

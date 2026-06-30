@@ -1,0 +1,128 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zbx-rpc
+  namespace: zebvix
+  labels:
+    app: zbx-rpc
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: zbx-rpc
+  template:
+    metadata:
+      labels:
+        app: zbx-rpc
+    spec:
+      # Audit H-19: pod-level non-root + seccomp default. The previous spec
+      # set no securityContext at all, so a compromised RPC node ran as UID 0
+      # with full Linux capabilities and a writable root filesystem.
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: zbx-node
+          image: zebvix/node:v0.1.0
+          args:
+            - --config
+            - /etc/zbx/rpc-config.toml
+            - --mode
+            - rpc-only
+          ports:
+            - containerPort: 8545
+              name: http
+            - containerPort: 8546
+              name: ws
+          resources:
+            requests:
+              cpu: "1"
+              memory: "4Gi"
+            limits:
+              cpu: "2"
+              memory: "8Gi"
+          # Container-level hardening — drop every capability, no privilege
+          # escalation, immutable rootfs. /tmp and /data must be mounted as
+          # writable emptyDir / PVC volumes if the node needs scratch space.
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          # Audit H-20: liveness + readiness so failed pods are recycled and
+          # not-ready pods are removed from the LB before they 5xx clients.
+          startupProbe:
+            httpGet: { path: /health, port: 8545 }
+            failureThreshold: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet: { path: /health, port: 8545 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet: { path: /health, port: 8545 }
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            failureThreshold: 5
+          volumeMounts:
+            - name: zbx-config
+              mountPath: /etc/zbx
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: zbx-config
+          configMap:
+            name: zbx-rpc-config
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zbx-rpc-lb
+  namespace: zebvix
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: nlb
+spec:
+  type: LoadBalancer
+  selector:
+    app: zbx-rpc
+  ports:
+    - name: http
+      port: 8545
+      targetPort: 8545
+    - name: ws
+      port: 8546
+      targetPort: 8546
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: zbx-rpc-hpa
+  namespace: zebvix
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: zbx-rpc
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80

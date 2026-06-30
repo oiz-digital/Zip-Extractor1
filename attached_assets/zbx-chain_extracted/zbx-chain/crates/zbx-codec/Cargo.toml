@@ -1,0 +1,11 @@
+[package]
+name    = "zbx-codec"
+version = "0.1.0"
+edition = "2021"
+description = "Cross-chain serialisation for ZBX Chain: SSZ (Ethereum), Borsh (Solana/Near), Scale (Polkadot)"
+
+[dependencies]
+zbx-types = { path = "../zbx-types" }
+thiserror = "1"
+serde     = { version = "1", features = ["derive"] }
+sha2      = "0.10"

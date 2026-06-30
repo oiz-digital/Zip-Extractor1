@@ -1,0 +1,87 @@
+# ZBX Testnet Faucet (Kubernetes)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zbx-faucet
+  namespace: zbx-chain
+  labels:
+    app: zbx-faucet
+    component: faucet
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zbx-faucet
+  template:
+    metadata:
+      labels:
+        app: zbx-faucet
+    spec:
+      # Audit H-19: pod runs as a fixed non-root UID with seccomp default.
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: faucet
+          image: zbvix/zbx-faucet:latest
+          ports:
+            - containerPort: 8600   # Faucet web UI + API
+          # Container-level hardening (audit H-19).
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          # Audit H-20: explicit health probes so a wedged faucet pod is
+          # restarted instead of silently 502-ing testnet users.
+          readinessProbe:
+            httpGet: { path: /healthz, port: 8600 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /healthz, port: 8600 }
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            failureThreshold: 3
+          env:
+            - name: FAUCET_CONTRACT
+              value: "0xFAUCET0000000000000000000000000000000001"
+            - name: ZBX_RPC
+              value: "http://zbx-rpc:8545"
+            - name: FAUCET_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: zbx-secrets
+                  key: faucet-private-key
+            - name: DRIP_AMOUNT
+              value: "100000000000000000000"  # 100 ZBX
+            - name: COOLDOWN_HOURS
+              value: "24"
+            - name: RECAPTCHA_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: zbx-secrets
+                  key: recaptcha-secret
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zbx-faucet
+  namespace: zbx-chain
+spec:
+  selector:
+    app: zbx-faucet
+  ports:
+    - port: 80
+      targetPort: 8600

@@ -1,0 +1,23 @@
+[package]
+name        = "zbx-oracle"
+version     = "0.1.0"
+edition     = "2021"
+description = "Decentralized price oracle for ZBX chain (ZEP-011)"
+
+[dependencies]
+zbx-types   = { path = "../zbx-types" }
+zbx-crypto  = { path = "../zbx-crypto" }
+zbx-rpc     = { path = "../zbx-rpc" }
+serde       = { version = "1", features = ["derive"] }
+serde-big-array = "0.5"
+serde_json  = "1"
+thiserror   = "1"
+tracing     = "0.1"
+tokio       = { version = "1", features = ["full"] }
+reqwest = {  version = "0.12", features = ["json", "rustls-tls"], default-features = false  }
+sha2        = "0.10"
+hex         = "0.4"
+
+[dev-dependencies]
+tokio       = { version = "1", features = ["test-util"] }
+wiremock    = "0.6"

@@ -1,0 +1,59 @@
+syntax = "proto3";
+package zbx.da.v1;
+
+// Data Availability gRPC service.
+service DaService {
+  // Submit a blob for storage.
+  rpc SubmitBlob(SubmitBlobRequest) returns (SubmitBlobResponse);
+  // Retrieve a blob by versioned hash.
+  rpc GetBlob(GetBlobRequest) returns (GetBlobResponse);
+  // Get a single chunk + KZG proof (for DAS).
+  rpc GetBlobChunk(GetBlobChunkRequest) returns (GetBlobChunkResponse);
+  // Check blob availability.
+  rpc CheckAvailability(CheckAvailabilityRequest) returns (CheckAvailabilityResponse);
+}
+
+message SubmitBlobRequest {
+  bytes blob_data   = 1; // 128 KB blob
+  bytes commitment  = 2; // 48-byte KZG commitment
+  bytes proof       = 3; // 48-byte KZG proof
+  uint64 block_number = 4;
+}
+
+message SubmitBlobResponse {
+  bytes versioned_hash = 1; // 32-byte versioned hash
+  bool  accepted       = 2;
+}
+
+message GetBlobRequest {
+  bytes versioned_hash = 1;
+}
+
+message GetBlobResponse {
+  bytes blob_data  = 1;
+  bytes commitment = 2;
+  bytes proof      = 3;
+  bool  found      = 4;
+}
+
+message GetBlobChunkRequest {
+  bytes versioned_hash = 1;
+  uint32 chunk_index   = 2; // 0-4095
+}
+
+message GetBlobChunkResponse {
+  bytes chunk_data   = 1; // 32 bytes
+  bytes chunk_proof  = 2; // KZG opening proof
+  bool  available    = 3;
+}
+
+message CheckAvailabilityRequest {
+  repeated bytes versioned_hashes = 1;
+  uint32 sample_count             = 2; // default: 75
+}
+
+message CheckAvailabilityResponse {
+  bool   available          = 1;
+  uint32 samples_checked    = 2;
+  uint32 samples_available  = 3;
+}

@@ -1,0 +1,207 @@
+{
+  "_README": [
+    "OPERATOR SPEC TEMPLATE — NOT LOADED AT BOOT.",
+    "",
+    "Mainnet (chain_id 8989) boots from the hardcoded GenesisConfig::mainnet()",
+    "preset in node/src/genesis.rs. This JSON is the human-readable spec that",
+    "captures the FULL tokenomics + ZUSD + AMM + burn + staking parameters that",
+    "the runtime preset implements. It is NOT in GenesisConfig schema (which",
+    "only covers chain_id, alloc[], validators[]).",
+    "",
+    "To activate operator-supplied genesis (e.g. with real validator BLS keys",
+    "generated via zbx-keygen on secure hardware), produce a SEPARATE file in",
+    "the GenesisConfig schema with keys { chain_id, timestamp, gas_limit,",
+    "base_fee, extra_data, alloc[{address,balance,nonce?,code?,storage?}],",
+    "validators[address] } and point chain.genesis_file at it in mainnet.toml.",
+    "validate_no_placeholders() will reject any address whose first 18 bytes",
+    "are all zero on chain_id 8989, so PLACEHOLDER_* literals here can never",
+    "accidentally reach a live mainnet boot."
+  ],
+  "chain_id":    8989,
+  "chain_name":  "Zebvix Chain",
+  "timestamp":   "2025-06-01T00:00:00Z",
+  "block_number": 0,
+  "block_gas_limit": 30000000,
+  "base_fee_initial": 1000000000,
+
+  "validators": [
+    {
+      "address":    "0xVALIDATOR_1_ADDRESS_PLACEHOLDER_00001",
+      "bls_pubkey": "0xBLS_PUBKEY_PLACEHOLDER_VALIDATOR_1_0000",
+      "stake":      "100000000000000000000000",
+      "commission_bps": 500,
+      "name": "Zebvix Technologies"
+    },
+    {
+      "address":    "0xVALIDATOR_2_ADDRESS_PLACEHOLDER_00002",
+      "bls_pubkey": "0xBLS_PUBKEY_PLACEHOLDER_VALIDATOR_2_0000",
+      "stake":      "100000000000000000000000",
+      "commission_bps": 500,
+      "name": "Community Validator A"
+    },
+    {
+      "address":    "0xVALIDATOR_3_ADDRESS_PLACEHOLDER_00003",
+      "bls_pubkey": "0xBLS_PUBKEY_PLACEHOLDER_VALIDATOR_3_0000",
+      "stake":      "100000000000000000000000",
+      "commission_bps": 500,
+      "name": "Community Validator B"
+    },
+    {
+      "address":    "0xVALIDATOR_4_ADDRESS_PLACEHOLDER_00004",
+      "bls_pubkey": "0xBLS_PUBKEY_PLACEHOLDER_VALIDATOR_4_0000",
+      "stake":      "100000000000000000000000",
+      "commission_bps": 500,
+      "name": "Community Validator C"
+    }
+  ],
+
+  "allocations": [
+    {
+      "address": "0xFOUNDATION_MULTISIG_ADDRESS_00000000001",
+      "balance": "9990000000000000000000000",
+      "comment": "Foundation (6.66%): development, operations, ecosystem"
+    },
+    {
+      "address": "0xLIQUIDITY_AMM_POOL_ADDRESS_000000000002",
+      "balance": "20000000000000000000000000",
+      "comment": "AMM genesis liquidity seed (13.33%) — ownerless, immutable, no admin"
+    },
+    {
+      "address": "0xTREASURY_GOVERNANCE_ADDRESS_00000000003",
+      "balance": "5000000000000000000000000",
+      "comment": "Governance treasury (3.33%): community grants"
+    },
+    {
+      "address": "0xTEAM_VESTING_WALLET_ADDRESS_000000000004",
+      "balance": "3000000000000000000000000",
+      "comment": "Team vesting (2.0%): 4-year linear, 1-year cliff"
+    },
+    {
+      "address": "0xECOSYSTEM_GRANTS_ADDRESS_000000000000005",
+      "balance": "2000000000000000000000000",
+      "comment": "Ecosystem grants (1.33%): developer fund"
+    }
+  ],
+
+  "token_allocations": [
+    {
+      "_note":   "ZUSD pre-mint to admin/foundation — used to seed AMM pool at launch",
+      "token":   "ZUSD",
+      "address": "0xFOUNDATION_MULTISIG_ADDRESS_00000000001",
+      "amount":  "100000000000000000000000000",
+      "comment": "Admin pre-mint: 100,000,000 ZUSD for AMM ZBX/ZUSD pool seeding"
+    },
+    {
+      "_note":   "ZUSD reserve for lending protocol liquidity",
+      "token":   "ZUSD",
+      "address": "0xTREASURY_GOVERNANCE_ADDRESS_00000000003",
+      "amount":  "5000000000000000000000000",
+      "comment": "Treasury ZUSD reserve: 5,000,000 ZUSD for lending/stability ops"
+    }
+  ],
+
+  "zusd": {
+    "_note":            "ZUSD stablecoin configuration — minted by ZusdVault",
+    "total_genesis_supply": "105000000000000000000000000",
+    "vault_contract":   "FILL_ZUSD_VAULT_ADDRESS",
+    "collateral_ratio": 150,
+    "admin_mint": {
+      "enabled": true,
+      "address": "0xFOUNDATION_MULTISIG_ADDRESS_00000000001",
+      "amount":  "100000000000000000000000000",
+      "comment": "100,000,000 ZUSD pre-minted to admin at genesis (no collateral required for genesis mint)"
+    }
+  },
+
+  "burn": {
+    "_note":            "Deflationary burn — 10% of every tx fee burned permanently until max cap reached",
+    "enabled":          true,
+    "fee_burn_bps":     1000,
+    "burn_address":     "0x000000000000000000000000000000000000dEaD",
+    "max_burn_supply":  "75000000000000000000000000",
+    "_max_burn_note":   "75,000,000 ZBX max burn cap (50% of 150M total supply). Burning stops after this.",
+    "fee_distribution": {
+      "_note":        "How each transaction fee is split (basis points, total = 10000)",
+      "burn":         1000,
+      "validator":    6300,
+      "delegators":   1800,
+      "treasury":      900
+    }
+  },
+
+  "mining": {
+    "_supply_breakdown": "Hard cap = 150,000,000 ZBX. Genesis alloc = 39,990,000. Validator stakes = 400,000 (4 × 100,000). Mining cap = 150,000,000 − 39,990,000 − 400,000 = 109,610,000 ZBX.",
+    "initial_reward":         "3000000000000000000",
+    "halving_interval_blocks": 25000000,
+    "total_mined_cap":        "109610000000000000000000000"
+  },
+
+  "consensus": {
+    "type":             "hotstuff-bft",
+    "round_timeout_ms": 5000,
+    "block_time_ms":    5000,
+    "min_validators":   4
+  },
+
+  "staking": {
+    "min_validator_stake":     "100000000000000000000",
+    "_min_validator_human":    "100 ZBX minimum to become a validator",
+    "min_delegation":          "10000000000000000000",
+    "_min_delegation_human":   "10 ZBX minimum per delegator",
+    "unbonding_period_blocks": 362880,
+    "max_validators":          100,
+    "slash_double_sign_pct":   5,
+    "slash_downtime_pct":      1
+  },
+
+  "amm": {
+    "_note":              "ZBX AMM — fully decentralized, ownerless, immutable pool",
+    "decentralized":      true,
+    "owner":              null,
+    "owner_renounced":    true,
+    "upgradeable":        false,
+    "pausable":           false,
+    "fee_changeable":     false,
+    "swap_fee_bps":       30,
+    "_swap_fee_note":     "0.30% swap fee — hardcoded, nobody can change it (not even admin)",
+    "fee_split": {
+      "lp_providers_bps": 25,
+      "protocol_burn_bps": 5,
+      "_note":            "0.25% → LP providers, 0.05% → burned (sent to 0x000...dEaD)"
+    },
+    "swap_limits": {
+      "_note":              "Anti-whale protection — enforced at contract level, nobody can bypass",
+      "max_buy_per_tx":     "50000000000000000000000",
+      "_max_buy_human":     "50,000 ZBX max per single swap transaction",
+      "max_sell_per_tx":    "50000000000000000000000",
+      "_max_sell_human":    "50,000 ZBX max per single sell transaction",
+      "max_impact_bps":     1500,
+      "_max_impact_note":   "Max 15% price impact per swap — tx reverts if slippage exceeds this",
+      "cooldown_blocks":    0,
+      "_cooldown_note":     "No per-wallet cooldown (anti-whale handled by per-tx limit only)"
+    },
+
+    "access_control": {
+      "add_liquidity":    "anyone",
+      "remove_liquidity": "only_lp_token_holder",
+      "swap":             "anyone",
+      "set_fee":          "nobody",
+      "pause":            "nobody",
+      "drain":            "nobody",
+      "upgrade":          "nobody",
+      "change_limits":    "nobody",
+      "_note":            "No admin key, no multisig, no timelock — pure code-is-law. Limits are hardcoded."
+    },
+    "deployment": {
+      "type":             "immutable",
+      "proxy":            false,
+      "renounce_tx":      "ownership renounced in deployment tx (constructor sets owner=address(0))",
+      "_verify_note":     "Verify on explorer: owner() returns 0x0000...0000"
+    }
+  },
+
+  "evm": {
+    "chain_id":    8989,
+    "hardfork":    "cancun"
+  }
+}

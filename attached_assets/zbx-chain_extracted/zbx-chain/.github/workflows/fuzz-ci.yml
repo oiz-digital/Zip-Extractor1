@@ -1,0 +1,60 @@
+name: Fuzz CI
+
+on:
+  schedule:
+    # Run every night at 02:00 UTC
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+    inputs:
+      fuzz_time:
+        description: "Max time per target (seconds)"
+        required: false
+        default: "120"
+
+env:
+  CARGO_TERM_COLOR: always
+  FUZZ_TIME: ${{ github.event.inputs.fuzz_time || '120' }}
+
+jobs:
+  fuzz:
+    name: Fuzz — ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - tx_decode
+          - block_import
+          - rlp_decode
+          - fuzz_trie_node_decode
+          - fuzz_payid_parser
+          - fuzz_rlp_decode_arbitrary
+          - fuzz_rlp_encode_decode
+          - fuzz_zvm_bytecode
+          - fuzz_zvm_native_opcodes
+          - fuzz_zvm_opcodes
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: fuzz-${{ matrix.target }}
+
+      - name: Install cargo-fuzz
+        run: cargo install cargo-fuzz
+
+      - name: Run fuzz target
+        run: |
+          cargo +nightly fuzz run ${{ matrix.target }} \
+            -- -max_total_time=${{ env.FUZZ_TIME }} \
+               -max_len=65536 \
+               -jobs=2
+
+      - name: Upload crash artifacts (if any)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-crash-${{ matrix.target }}
+          path: fuzz/artifacts/${{ matrix.target }}/
+          retention-days: 30

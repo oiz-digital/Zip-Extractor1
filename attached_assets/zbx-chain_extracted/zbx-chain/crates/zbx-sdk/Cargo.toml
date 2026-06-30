@@ -1,0 +1,73 @@
+[package]
+name        = "zbx-sdk"
+version     = "0.3.0"
+edition     = "2021"
+authors     = ["Zebvix Technologies <dev@zebvix.com>"]
+description = "Zebvix Chain developer SDK — full-featured client library"
+license     = "Apache-2.0"
+repository  = "https://github.com/zebvix/zbx-chain"
+keywords    = ["blockchain", "zebvix", "zbx", "web3", "ethereum"]
+
+[features]
+default  = ["provider", "wallet", "contract"]
+provider = []
+wallet   = []
+contract = []
+ws       = ["tokio-tungstenite"]
+hd       = ["hmac", "sha2", "pbkdf2", "unicode-normalization", "bip39"]
+full     = ["provider", "wallet", "contract", "ws", "hd"]
+
+[dependencies]
+zbx-types    = { path = "../zbx-types" }
+zbx-crypto   = { path = "../zbx-crypto" }
+zbx-abi      = { path = "../zbx-abi" }
+zbx-rlp      = { path = "../zbx-rlp" }
+zbx-keystore = { path = "../zbx-keystore" }
+
+# Serialization
+serde      = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Async runtime
+tokio      = { version = "1", features = ["full"] }
+futures    = "0.3"
+async-trait = "0.1"
+
+# HTTP transport
+reqwest = { default-features = false, version = "0.12", features = ["json", "gzip", "rustls-tls"]  }
+
+# WebSocket (optional)
+tokio-tungstenite = { version = "0.23", optional = true, features = ["native-tls"] }
+
+# Cryptography
+k256        = { version = "0.13", features = ["ecdsa", "arithmetic"] }
+sha3        = "0.10"
+sha2        = { version = "0.10", optional = true }
+hmac        = { version = "0.12", optional = true }
+pbkdf2      = { version = "0.12", optional = true }
+bip39       = { version = "1", optional = true }
+unicode-normalization = { version = "0.1", optional = true }
+
+# Encoding
+hex        = "0.4"
+bs58       = "0.5"
+
+# Logging
+log        = "0.4"
+
+# Error handling
+thiserror  = "1"
+anyhow     = "1"
+
+# Utilities
+parking_lot = "0.12"
+dashmap    = "5"
+once_cell  = "1"
+uuid       = { version = "1", features = ["v4"] }
+url        = "2"
+chrono     = { version = "0.4", features = ["serde"] }
+rand       = "0.8"
+
+[dev-dependencies]
+tokio-test  = "0.4"
+wiremock    = "0.6"

@@ -1,0 +1,148 @@
+//! AMM error types.
+
+/// All errors that can occur in pool operations.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum AmmError {
+    // ── Security errors ────────────────────────────────────────────────────
+
+    /// Reentrancy detected — a second call entered while the pool was locked.
+    Reentrancy,
+
+    /// Pool is paused by the circuit breaker.
+    PoolPaused { reason: String },
+
+    /// Price impact exceeds the per-swap limit.
+    PriceImpactTooHigh { impact_bps: u32, max_bps: u32 },
+
+    /// Slippage exceeded — output below caller's minimum.
+    SlippageExceeded { got: u128, min: u128 },
+
+    /// Transaction deadline has passed.
+    DeadlineExpired { now: u64, deadline: u64 },
+
+    /// Single swap drains too much of the reserve.
+    ReserveDrainExceeded { drain_bps: u32, max_bps: u32 },
+
+    /// Pool spot price deviates too far from the oracle TWAP.
+    OraclePriceDeviation { deviation_bps: u32, max_bps: u32 },
+
+    // ── Math errors ────────────────────────────────────────────────────────
+
+    /// u128 multiplication overflow.
+    Overflow,
+
+    /// Division by zero.
+    DivisionByZero,
+
+    /// k-invariant overflow — reserves are too large to multiply in u128.
+    ///
+    /// This is a defence-in-depth guard: if `reserve_a × reserve_b` overflows
+    /// u128 the k-invariant check cannot be performed safely.  Production
+    /// deployments should never accumulate reserves large enough to trigger
+    /// this — the `MAX_RESERVE_DRAIN_BPS` guard (30%) prevents runaway growth.
+    InvariantOverflow,
+
+    // ── Pool-factory errors ────────────────────────────────────────────────
+
+    /// A pool for this token pair already exists.
+    PoolAlreadyExists,
+
+    /// Both tokens in a pair must be different.
+    IdenticalTokens,
+
+    /// The caller's ZBX balance is insufficient to pay the pool-creation fee.
+    InsufficientCreationFee { have: u128, need: u128 },
+
+    // ── Liquidity errors ───────────────────────────────────────────────────
+
+    /// Reserve is zero — cannot swap against empty pool.
+    EmptyReserve,
+
+    /// Insufficient liquidity output when removing.
+    InsufficientLiquidityBurned,
+
+    /// LP token balance too low for the requested burn.
+    InsufficientLpBalance,
+
+    /// Liquidity amount would fall below `MIN_LIQUIDITY`.
+    BelowMinLiquidity,
+
+    /// Both token amounts must be > 0 when adding liquidity.
+    ZeroAmount,
+
+    // ── Swap errors ────────────────────────────────────────────────────────
+
+    /// Calculated output is zero (pool too thin for this trade size).
+    ZeroOutput,
+
+    /// Invariant check failed after swap (k decreased — accounting bug).
+    InvariantViolation,
+
+    // ── Token / transfer errors ────────────────────────────────────────────
+
+    /// Transfer to the zero address is not allowed.
+    ///
+    /// ERC-20 convention: sending to `0x0000…0000` is a permanent burn
+    /// and must always be explicit.  An accidental zero-address transfer
+    /// would silently destroy tokens with no way to recover them.
+    ZeroAddressTransfer,
+
+    /// Pool pair not found in the factory registry.
+    ///
+    /// Distinct from `EmptyReserve` (pair exists but has no liquidity).
+    /// This fires when a caller references a pair that was never created.
+    PairNotFound,
+}
+
+impl std::fmt::Display for AmmError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Reentrancy =>
+                write!(f, "AMM reentrancy detected"),
+            Self::PoolPaused { reason } =>
+                write!(f, "pool paused: {reason}"),
+            Self::PriceImpactTooHigh { impact_bps, max_bps } =>
+                write!(f, "price impact {impact_bps} bps > max {max_bps} bps"),
+            Self::SlippageExceeded { got, min } =>
+                write!(f, "slippage: got {got}, required {min}"),
+            Self::DeadlineExpired { now, deadline } =>
+                write!(f, "deadline expired: now={now}, deadline={deadline}"),
+            Self::ReserveDrainExceeded { drain_bps, max_bps } =>
+                write!(f, "reserve drain {drain_bps} bps > max {max_bps} bps"),
+            Self::OraclePriceDeviation { deviation_bps, max_bps } =>
+                write!(f, "oracle deviation {deviation_bps} bps > max {max_bps} bps"),
+            Self::Overflow =>
+                write!(f, "arithmetic overflow"),
+            Self::DivisionByZero =>
+                write!(f, "division by zero"),
+            Self::InvariantOverflow =>
+                write!(f, "k-invariant overflow: reserves too large for u128 product"),
+            Self::PoolAlreadyExists =>
+                write!(f, "a pool for this token pair already exists"),
+            Self::IdenticalTokens =>
+                write!(f, "both tokens in a pair must be different"),
+            Self::InsufficientCreationFee { have, need } =>
+                write!(f, "insufficient creation fee: have {have} wei, need {need} wei"),
+            Self::EmptyReserve =>
+                write!(f, "reserve is empty"),
+            Self::InsufficientLiquidityBurned =>
+                write!(f, "insufficient liquidity burned"),
+            Self::InsufficientLpBalance =>
+                write!(f, "insufficient LP token balance"),
+            Self::BelowMinLiquidity =>
+                write!(f, "liquidity below minimum"),
+            Self::ZeroAmount =>
+                write!(f, "amount must be > 0"),
+            Self::ZeroOutput =>
+                write!(f, "swap output is zero (pool too thin)"),
+            Self::InvariantViolation =>
+                write!(f, "constant-product invariant violated after swap"),
+            Self::ZeroAddressTransfer =>
+                write!(f, "transfer to the zero address is not allowed"),
+            Self::PairNotFound =>
+                write!(f, "liquidity pair not found — create the pool first"),
+        }
+    }
+}
+
+impl std::error::Error for AmmError {}

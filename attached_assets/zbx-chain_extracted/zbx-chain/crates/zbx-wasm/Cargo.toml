@@ -1,0 +1,14 @@
+[package]
+name    = "zbx-wasm"
+version = "0.2.0"
+edition = "2021"
+description = "WebAssembly (WASM) smart contract runtime for Zebvix Chain — runs alongside EVM"
+
+[dependencies]
+zbx-types   = { path = "../zbx-types" }
+zbx-storage = { path = "../zbx-storage" }
+thiserror   = "1"
+serde       = { version = "1", features = ["derive"] }
+wasmtime    = { version = "21", default-features = false, features = ["cranelift", "component-model"] }
+wat         = "1"     # WASM text format parser (for debugging/dev)
+sha3        = "0.10"

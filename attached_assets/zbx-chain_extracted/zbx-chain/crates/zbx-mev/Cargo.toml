@@ -1,0 +1,24 @@
+[package]
+name    = "zbx-mev"
+version = "0.2.0"
+edition = "2021"
+description = "MEV protection, PBS (Proposer-Builder Separation), and fair tx ordering for ZBX Chain"
+
+[dependencies]
+zbx-types   = { path = "../zbx-types" }
+zbx-crypto  = { path = "../zbx-crypto" }
+zbx-mempool = { path = "../zbx-mempool" }
+thiserror   = "1"
+serde       = { version = "1", features = ["derive"] }
+serde-big-array = "0.5"
+tokio       = { version = "1", features = ["full"] }
+sha3        = "0.10"
+# S29 — RFC 9180 HPKE for private mempool tx encryption.
+# Cipher suite: DHKEM(X25519, HKDF-SHA256) / HKDF-SHA256 / AES-256-GCM
+# (IANA ids 0x0020 / 0x0001 / 0x0002).
+hpke        = "0.12"
+rand        = { version = "0.8", features = ["std"] }
+tracing     = "0.1"
+
+[dev-dependencies]
+rand        = "0.8"

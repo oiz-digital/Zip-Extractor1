@@ -1,0 +1,12 @@
+[package]
+name = "zbx-primitives"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde-big-array = "0.5"
+hex = "0.4"
+sha3 = "0.10"
+rlp = "0.5"
+thiserror = "1"

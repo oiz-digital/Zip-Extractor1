@@ -1,0 +1,21 @@
+[package]
+name        = "zbx-pq"
+version.workspace   = true
+edition.workspace   = true
+authors.workspace   = true
+license.workspace   = true
+description = "Post-quantum cryptography for ZBX Chain — CRYSTALS-Dilithium-3 signatures and CRYSTALS-Kyber-768 KEM (ZEP-015)"
+
+[dependencies]
+zbx-types   = { path = "../zbx-types" }
+serde       = { workspace = true }
+serde-big-array = "0.5"
+thiserror   = { workspace = true }
+zeroize     = { workspace = true }
+rand        = { workspace = true }
+rand_core   = { workspace = true }
+sha3        = { workspace = true }
+sha2        = { workspace = true }
+hex         = { workspace = true }
+# Real NIST FIPS 204 ML-DSA-65 (= Dilithium-3) — pure Rust, no C deps required
+fips204     = "0.4"

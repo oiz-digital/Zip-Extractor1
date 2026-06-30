@@ -1,0 +1,12 @@
+[package]
+name = "zbx-nft"
+version = "0.1.0"
+edition = "2021"
+description = "NFT minting, marketplace, and royalty logic for Zebvix Chain."
+
+[dependencies]
+zbx-types    = { path = "../zbx-types" }
+zbx-evm      = { path = "../zbx-evm" }
+zbx-storage  = { path = "../zbx-storage" }
+serde        = { version = "1", features = ["derive"] }
+anyhow       = "1"

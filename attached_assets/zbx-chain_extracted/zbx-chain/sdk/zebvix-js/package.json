@@ -1,0 +1,25 @@
+{
+  "name": "zebvix.js",
+  "version": "1.2.0",
+  "description": "zebvix.js — Native JavaScript/TypeScript SDK for ZBX chain. No ethers.js required.",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --watch",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@noble/curves": "^1.4.0",
+    "@noble/hashes": "^1.4.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  },
+  "keywords": ["zebvix", "zbx", "sdk", "blockchain", "zvm", "pay-id", "zusd"],
+  "license": "MIT",
+  "repository": "https://github.com/zebvix/zebvix-js"
+}

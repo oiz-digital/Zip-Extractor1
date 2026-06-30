@@ -1,0 +1,20 @@
+[package]
+name    = "zbx-sequencer"
+version = "0.1.0"
+edition = "2021"
+description = "Block proposer / sequencer for ZBX Chain — selects, orders, and seals blocks"
+
+[dependencies]
+zbx-types     = { path = "../zbx-types" }
+zbx-crypto    = { path = "../zbx-crypto" }
+zbx-mempool   = { path = "../zbx-mempool" }
+zbx-execution = { path = "../zbx-execution" }
+zbx-consensus = { path = "../zbx-consensus" }
+zbx-mev       = { path = "../zbx-mev" }
+zbx-fee       = { path = "../zbx-fee" }
+zbx-state     = { path = "../zbx-state" }
+thiserror     = "1"
+serde         = { version = "1", features = ["derive"] }
+tokio         = { version = "1", features = ["full"] }
+tracing       = "0.1"
+sha3          = "0.10"

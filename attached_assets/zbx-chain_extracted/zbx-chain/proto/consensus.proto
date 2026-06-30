@@ -1,0 +1,50 @@
+syntax = "proto3";
+package zbx.consensus.v1;
+
+// ZBX HotStuff BFT consensus messages.
+// Sent between validators over the consensus P2P layer.
+service ZbxConsensus {
+    rpc SendVote(VoteMessage)         returns (VoteResponse);
+    rpc SendProposal(ProposalMessage) returns (ProposalResponse);
+    rpc SendTimeout(TimeoutMessage)   returns (TimeoutResponse);
+}
+
+// A validator's vote on a block proposal.
+message VoteMessage {
+    uint64 round      = 1;
+    uint64 height     = 2;
+    bytes  block_hash = 3;
+    bytes  voter      = 4;  // validator address (20 bytes)
+    bytes  signature  = 5;  // BLS signature over (round, height, block_hash)
+}
+message VoteResponse { bool accepted = 1; }
+
+// Block proposal from the current round leader.
+message ProposalMessage {
+    uint64 round       = 1;
+    uint64 height      = 2;
+    bytes  block_rlp   = 3;  // full block body
+    bytes  proposer    = 4;
+    bytes  signature   = 5;
+    bytes  qc          = 6;  // quorum certificate from previous round
+}
+message ProposalResponse { bool accepted = 1; }
+
+// Timeout message — signals the sender gave up waiting for QC.
+message TimeoutMessage {
+    uint64 round    = 1;
+    uint64 height   = 2;
+    bytes  sender   = 3;
+    bytes  signature = 4;
+    bytes  high_qc  = 5;  // highest QC known to sender (for recovery)
+}
+message TimeoutResponse {}
+
+// Quorum Certificate — aggregated BLS signatures from 2f+1 validators.
+message QuorumCertificate {
+    uint64 round      = 1;
+    uint64 height     = 2;
+    bytes  block_hash = 3;
+    bytes  agg_sig    = 4;  // BLS12-381 aggregate signature
+    bytes  signers    = 5;  // bitset of signing validators
+}

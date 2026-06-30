@@ -1,0 +1,99 @@
+# ZBX Chain ZK Prover Service (Kubernetes)
+# Deploys the zbx-prover as a scalable service.
+# GPU nodes are used when available for faster proof generation.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zbx-prover
+  namespace: zbx-chain
+  labels:
+    app: zbx-prover
+    component: zk-proving
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: zbx-prover
+  template:
+    metadata:
+      labels:
+        app: zbx-prover
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9091"
+    spec:
+      # Prefer GPU nodes for proving workloads.
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              preference:
+                matchExpressions:
+                  - key: nvidia.com/gpu
+                    operator: Exists
+      containers:
+        - name: prover
+          image: zbvix/zbx-prover:0.2.0
+          ports:
+            - containerPort: 8550   # gRPC proof API
+            - containerPort: 9091   # Prometheus metrics
+          env:
+            - name: ZBX_RPC
+              value: "http://zbx-rpc:8545"
+            - name: PROVER_MODE
+              value: "cpu"           # set to "gpu" on GPU nodes
+            - name: PROVER_PARALLELISM
+              value: "8"
+            - name: RUST_LOG
+              value: "zbx_prover=info"
+          resources:
+            requests:
+              cpu: "4"
+              memory: "8Gi"
+            limits:
+              cpu: "16"
+              memory: "32Gi"
+          # GPU resource (only on GPU-enabled nodes)
+          # resources:
+          #   limits:
+          #     nvidia.com/gpu: "1"
+          livenessProbe:
+            grpc:
+              port: 8550
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          volumeMounts:
+            - name: proof-cache
+              mountPath: /data/proofs
+      volumes:
+        - name: proof-cache
+          persistentVolumeClaim:
+            claimName: prover-cache-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zbx-prover
+  namespace: zbx-chain
+spec:
+  selector:
+    app: zbx-prover
+  ports:
+    - name: grpc
+      port: 8550
+      targetPort: 8550
+    - name: metrics
+      port: 9091
+      targetPort: 9091
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prover-cache-pvc
+  namespace: zbx-chain
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: ssd

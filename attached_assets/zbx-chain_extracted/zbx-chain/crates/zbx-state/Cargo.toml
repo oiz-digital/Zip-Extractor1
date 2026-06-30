@@ -1,0 +1,26 @@
+[package]
+name = "zbx-state"
+version = "0.2.0"
+edition = "2021"
+authors = ["Zebvix Technologies Pvt Ltd"]
+description = "World state management and Merkle-Patricia Trie for Zebvix"
+license = "MIT"
+
+[dependencies]
+zbx-types = { path = "../zbx-types" }
+zbx-crypto = { path = "../zbx-crypto" }
+zbx-zvm = { path = "../zbx-zvm" }
+zbx-storage = { path = "../zbx-storage" }
+zbx-trie = { path = "../zbx-trie" }
+zbx-rlp = { path = "../zbx-rlp" }
+serde = { version = "1", features = ["derive"] }
+bincode = "1"
+thiserror = "1"
+tracing = "0.1"
+
+[dev-dependencies]
+hex = "0.4"
+# S33-state-root W3b — `tempfile::TempDir` is used by `tests/trie_adapter.rs`
+# to spin up isolated RocksDB instances per test (so persistence + reopen
+# behaviour can be exercised without polluting global state).
+tempfile = "3"

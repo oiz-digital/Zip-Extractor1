@@ -1,0 +1,13 @@
+[package]
+name        = "zbx-oracle-twap"
+version     = "0.1.0"
+edition     = "2021"
+description = "On-chain TWAP oracle from ZBX AMM pools (ZEP-012)"
+
+[dependencies]
+zbx-types   = { path = "../zbx-types" }
+zbx-state   = { path = "../zbx-state" }
+zbx-evm     = { path = "../zbx-evm" }
+serde       = { version = "1", features = ["derive"] }
+thiserror   = "1"
+tracing     = "0.1"

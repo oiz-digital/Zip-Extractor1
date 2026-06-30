@@ -1,0 +1,52 @@
+# Devnet configuration for local development.
+#
+# Devnet uses the testnet network preset (chain_id 8990) — the Rust enum
+# `node::genesis::Network` only recognises Mainnet and Testnet, so passing
+# `network = "devnet"` here is informational only; the runtime selects via
+# `--network testnet` on the CLI. Keep chain_id in sync with
+# `crates/zbx-types/src/lib.rs::CHAIN_ID + 1 = 8990`.
+
+[chain]
+chain_id    = 8990
+network     = "testnet"   # devnet rides on the testnet preset; see comment above
+block_time  = 2        # seconds
+
+[node]
+data_dir    = "./data/devnet"
+log_level   = "debug"
+log_format  = "pretty"
+
+[rpc]
+http_addr   = "0.0.0.0:8545"
+ws_addr     = "0.0.0.0:8546"
+cors_allow  = "*"
+rate_limit  = 0        # unlimited for devnet
+
+[p2p]
+listen_addr = "0.0.0.0:30303"
+max_peers   = 25
+boot_nodes  = []       # no boot nodes for local devnet
+
+[consensus]
+round_timeout_ms = 5000
+validators = [
+  # Add your devnet validator pubkeys here.
+]
+
+[mempool]
+max_size         = 10000
+max_per_account  = 64
+min_gas_price    = "0"  # free transactions in devnet
+
+[metrics]
+enabled  = true
+addr     = "0.0.0.0:9100"
+
+[storage]
+db_path  = "./data/devnet/db"
+cache_mb = 256
+
+[indexer]
+enabled  = true
+db_path  = "./data/devnet/indexer.db"
+api_addr = "0.0.0.0:8080"

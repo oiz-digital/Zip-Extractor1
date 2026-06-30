@@ -1,0 +1,96 @@
+[package]
+name = "zbx-node"
+version = "0.2.0"
+edition = "2021"
+authors = ["Zebvix Technologies Pvt Ltd"]
+description = "Zebvix full node binary — assembles all subsystems"
+license = "MIT"
+default-run = "zbx-node"
+
+[[bin]]
+name = "zbx-node"
+path = "src/main.rs"
+
+[[bin]]
+name = "zbx-keygen"
+path = "src/bin/zbx-keygen.rs"
+
+[dependencies]
+rand = "0.8"
+# Task #14 readiness predicate: KAT probes for precompiles 0x02 / 0x03.
+sha2   = "0.10"
+ripemd = "0.1"
+zbx-types      = { path = "../crates/zbx-types" }
+zbx-crypto     = { path = "../crates/zbx-crypto" }
+zbx-consensus  = { path = "../crates/zbx-consensus" }
+zbx-mempool    = { path = "../crates/zbx-mempool" }
+zbx-network    = { path = "../crates/zbx-network" }
+zbx-storage    = { path = "../crates/zbx-storage" }
+# Task #1: pruner subsystem decodes raw trie nodes via TrieNode::decode
+# to extract child references for the BFS-mark phase.
+zbx-trie       = { path = "../crates/zbx-trie" }
+# Task #15: production trie pruner — RocksDbPruner + PrunerLock + Retained.
+# Replaces the older `zbx_storage::pruner::prune_once` runtime wiring with
+# the mark-and-sweep over `Column::TrieNodes` + commit-lock coordination.
+zbx-pruner     = { path = "../crates/zbx-pruner" }
+zbx-execution  = { path = "../crates/zbx-execution" }
+zbx-evm        = { path = "../crates/zbx-evm" }
+zbx-state      = { path = "../crates/zbx-state" }
+zbx-rpc        = { path = "../crates/zbx-rpc" }
+zbx-staking    = { path = "../crates/zbx-staking" }
+# Task #12: secure_write + tighten_dir for VPS keystore-perm hardening.
+zbx-keystore   = { path = "../crates/zbx-keystore" }
+zbx-bridge     = { path = "../crates/zbx-bridge" }
+zbx-metrics    = { path = "../crates/zbx-metrics" }
+# EIP-1559 fee market wiring: BaseFeeCalculator for block-producer base-fee
+# computation and GasPriceOracle / FeeHistory for RPC endpoints.
+zbx-fee        = { path = "../crates/zbx-fee" }
+# ── Previously-unwired subsystems now wired into the node binary ──────────────
+# ZEP-011: Decentralized price oracle — Chainlink-style reporter + aggregator.
+zbx-oracle     = { path = "../crates/zbx-oracle" }
+# ZEP-017: ERC-4337 Account Abstraction bundler (UserOperation validation,
+# simulation, batching, EntryPoint submission).
+zbx-bundler    = { path = "../crates/zbx-bundler" }
+# MEV protection: private mempool, commit-reveal ordering, PBS, redistribution.
+zbx-mev        = { path = "../crates/zbx-mev" }
+# Chain synchronisation: fast-sync, snap-sync, live-sync coordinator.
+zbx-sync       = { path = "../crates/zbx-sync" }
+# ZEP-003: Data Availability layer — EIP-4844 blobs, KZG commitments, DAS.
+zbx-da         = { path = "../crates/zbx-da" }
+# Observability: Prometheus + OpenTelemetry OTLP traces + JSON structured logs.
+zbx-telemetry  = { path = "../crates/zbx-telemetry" }
+# ZEP-026: Trustless cross-chain layer — BLS header verification + MPT proofs.
+zbx-xcl        = { path = "../crates/zbx-xcl" }
+# Block/staking rewards + fee distribution + halving schedule.
+zbx-rewards    = { path = "../crates/zbx-rewards" }
+# ZEP-008: State rent — 0.0001 ZBX/year/slot, hibernation, expiry.
+zbx-state-rent = { path = "../crates/zbx-state-rent" }
+# ZVM: Zebvix superset VM with native opcodes 0xC0-0xCA (PAYID, AIINFER, …).
+zbx-zvm        = { path = "../crates/zbx-zvm" }
+# Canonical Cancun EVM (new code target; zbx-evm is the execution pipeline).
+zbx-vm         = { path = "../crates/zbx-vm" }
+# Block + event indexer (SQLite/PostgreSQL backend, GraphQL REST, TVL tracking).
+zbx-indexer    = { path = "../crates/zbx-indexer" }
+serde          = { version = "1", features = ["derive"] }
+serde_json     = "1"
+# Task #22: snapshot manifest is bincode-encoded on disk; the importer
+# in `node/src/snapshot_import.rs` deserialises it before handing the
+# `SignedSnapshotManifest` to `zbx_state::snapshot::verify`.
+bincode        = "1"
+tokio          = { version = "1", features = ["full"] }
+tokio-util     = { version = "0.7", features = ["rt"] }
+tracing        = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+clap           = { version = "4", features = ["derive"] }
+hex            = "0.4"
+toml           = "0.8"
+parking_lot    = "0.12"
+thiserror      = "1"
+# SEC-2026-05-09 (P1/P2): Noise Protocol Framework for transport encryption
+# (Noise_XX_25519_ChaChaPoly_SHA256) and cryptographic peer identity derived
+# from the static public key. Replaces the cleartext JSON-over-TCP transport.
+snow           = { version = "0.9", default-features = false, features = ["default-resolver"] }
+
+[dev-dependencies]
+tempfile       = "3"
+sha3           = "0.10"

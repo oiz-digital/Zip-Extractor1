@@ -1,0 +1,24 @@
+[package]
+name    = "zbx-threshold"
+version = "0.1.0"
+edition = "2021"
+description = "FROST threshold signatures for ZBX validator key management (ZEP-010)"
+
+[dependencies]
+zbx-crypto = { path = "../zbx-crypto" }
+zbx-types  = { path = "../zbx-types" }
+sha2       = "0.10"
+sha3       = "0.10"
+rand       = { version = "0.8", features = ["std"] }
+thiserror  = "1"
+serde      = { version = "1", features = ["derive"] }
+serde-big-array = "0.5"
+tracing    = "0.1"
+hex        = "0.4"
+# Real secp256k1 field/group arithmetic for FROST. The previous stub used
+# byte-wise XOR / wrapping_add, which makes any aggregate trivially forgeable.
+k256       = { version = "0.13", features = ["arithmetic"] }
+elliptic-curve = "0.13"
+
+[dev-dependencies]
+rand       = "0.8"

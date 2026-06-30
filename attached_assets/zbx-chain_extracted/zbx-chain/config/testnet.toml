@@ -1,0 +1,91 @@
+# Zebvix Chain Testnet Configuration
+# Network: ZBX Testnet (Chain ID: 8990)
+# Purpose: Public testnet for dApp development and validator testing
+#
+# IMPORTANT: chain_id MUST equal `crates/zbx-types/src/lib.rs::CHAIN_ID + 1 = 8990`.
+# Mainnet is 8989. The genesis loader (`node/src/genesis.rs`) rejects mismatches
+# unless `--allow-chain-mismatch` is passed (which is for ops-emergency only).
+
+[chain]
+name       = "zbx-testnet"
+
+chain_id   = 8990               # Testnet: 8990 | Mainnet: 8989
+
+is_validator = true
+genesis_file    = "config/testnet-genesis.json"
+data_dir   = "/data/zbx-testnet"
+
+[network]
+listen_addr  = "0.0.0.0:30333"
+listen_port = 30333
+public_addr  = "13.202.92.39:30333"               # set to your public IP
+max_peers    = 100
+min_peers    = 5
+bootnodes   = []
+discovery = true
+
+[rpc]
+http_enabled = true
+http_addr    = "0.0.0.0:8545"
+http_port = 8545
+ws_enabled = true
+ws_addr      = "0.0.0.0:8546"
+ws_port = 8546
+max_conns    = 500
+cors_origins = ["*"]             # open CORS for testnet
+rate_limit_rpm   = 1000              # requests/second
+
+[mempool]
+max_txs         = 50_000         # smaller than mainnet
+max_tx_size     = 131_072        # 128 KB
+min_gas_price   = 1              # 1 wei (testnet: very low)
+price_bump      = 10             # 10% min fee bump for replacement
+
+[consensus]
+type        = "hotstuff-bft"
+round_timeout_ms = 5000          # longer timeout for testnet
+block_time_ms    = 5000          # 5s block time
+max_block_gas = 30000000
+mempool_max_pending = 50000
+mempool_max_queued = 50000
+
+[execution]
+gas_limit    = 30_000_000
+base_fee_init = 1_000_000_000   # 1 gwei initial
+
+[staking]
+min_validator_stake   = 1000000000000000000  # 10,000 ZBX (testnet faucet)
+unbonding_period_days = 1                                # 1 day (vs 21 days mainnet)
+slash_pct             = 5
+
+[storage]
+data_dir = "/data/zbx-testnet"
+engine     = "rocksdb"
+cache_size_mb = 512                 # MB (smaller for testnet)
+prune_mode = "archive"           # testnet keeps all history
+max_open_files = 1024
+
+[prover]
+enabled    = true
+mode       = "cpu"               # no GPU required for testnet
+cache_dir  = "/data/zbx-testnet/proofs"
+
+[wasm]
+enabled      = true
+max_gas      = 10_000_000
+max_mem_pages = 256
+
+[telemetry]
+prometheus_addr = "0.0.0.0:9090"
+log_level       = "debug"        # verbose for testnet
+otlp_endpoint   = ""             # set for distributed tracing
+
+[faucet]
+enabled    = true
+amount     = 1000000000000000000  # 100 ZBX per request
+cooldown_s = 86400                         # 24 hours
+
+[metrics]
+enabled = true
+prometheus_addr = "0.0.0.0:9090"
+port = 9090

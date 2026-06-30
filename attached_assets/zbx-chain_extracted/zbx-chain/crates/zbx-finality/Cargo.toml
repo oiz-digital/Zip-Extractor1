@@ -1,0 +1,14 @@
+[package]
+name = "zbx-finality"
+version = "0.2.0"
+edition = "2021"
+description = "Re-export shim — finality types now live in zbx-consensus::finality (merged 2026-06-27)"
+
+# zbx-finality was an orphan crate (workspace member with no consumers).
+# Its types (Checkpoint, FinalityTracker, Justification) are now implemented
+# in zbx-consensus::finality, which uses the same zbx-types primitives as
+# the rest of the consensus stack. This crate is kept as a thin re-export
+# shim for backward compatibility; new code should import from zbx-consensus.
+
+[dependencies]
+zbx-consensus = { path = "../zbx-consensus" }

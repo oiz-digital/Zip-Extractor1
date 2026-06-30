@@ -1,0 +1,11 @@
+[package]
+name    = "zbx-trace"
+version = "0.1.0"
+edition = "2021"
+description = "EVM execution tracer for ZBX Chain — powers debug_traceTransaction and call graphs"
+
+[dependencies]
+zbx-types = { path = "../zbx-types" }
+thiserror = "1"
+serde     = { version = "1", features = ["derive"] }
+hex       = "0.4"

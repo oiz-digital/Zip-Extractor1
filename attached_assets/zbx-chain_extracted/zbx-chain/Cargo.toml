@@ -1,0 +1,192 @@
+[workspace]
+members = [
+    # Core primitives & types
+    "crates/zbx-types",
+    "crates/zbx-primitives",
+    "crates/zbx-crypto",
+    "crates/zbx-codec",
+    "crates/zbx-rlp",
+    "crates/zbx-abi",
+
+    # Consensus & block production
+    "crates/zbx-consensus",
+    "crates/zbx-block",
+    "crates/zbx-finality",
+    "crates/zbx-sequencer",
+    "crates/zbx-executor",
+    "crates/zbx-rewards",
+
+    # Networking
+    "crates/zbx-network",
+    "crates/zbx-net",
+    # zbx-p2p removed in SEC-2026-05-09 Pass-7 (C5).  Was a vestigial
+    # devp2p/RLPx scaffold with zero callers — node uses zbx-network +
+    # zbx-net (Noise XX from Pass-4) for the production transport.
+    # Keeping a second, unaudited p2p stack in the workspace was a
+    # supply-chain risk: any future `cargo build --workspace` could
+    # silently link an unmaintained encryption layer.  Code preserved
+    # in git history; restore via `git show <sha>:crates/zbx-p2p`.
+    "crates/zbx-gossip",
+    "crates/zbx-sync",
+
+    # Mempool & transactions
+    "crates/zbx-mempool",
+    "crates/zbx-tx",
+    "crates/zbx-fee",
+    "crates/zbx-bundler",
+    "crates/zbx-mev",
+
+    # State & storage
+    "crates/zbx-state",
+    "crates/zbx-state-rent",
+    "crates/zbx-storage",
+    "crates/zbx-trie",
+    "crates/zbx-verkle",
+    "crates/zbx-pruner",
+    "crates/zbx-snapshot",
+
+    # Execution & VM
+    "crates/zbx-execution",
+    "crates/zbx-evm",
+    "crates/zbx-vm",
+    "crates/zbx-zvm",
+    "crates/zbx-wasm",
+    "crates/zbx-zk",
+    "crates/zbx-prover",
+
+    # RPC & JSON-RPC
+    "crates/zbx-rpc",
+    "crates/zbx-jsonrpc",
+
+    # Native cross-chain layer (no bridges)
+    "crates/zbx-xcl",
+
+    # Staking, bridge, economics
+    "crates/zbx-staking",
+    "crates/zbx-bridge",
+    "crates/zbx-genesis",
+    "crates/zbx-config",
+
+    # Oracle
+    "crates/zbx-oracle",
+    "crates/zbx-oracle-optimistic",
+    "crates/zbx-oracle-twap",
+    "crates/zbx-oracle-zk",
+
+    # DeFi & protocols
+    "crates/zbx-pool",
+    "crates/zbx-payid",
+    "crates/zbx-contracts",
+    "crates/zbx-lending",
+    "crates/zbx-perp",
+    "crates/zbx-yield",
+    "crates/zbx-nft",
+    "crates/zbx-launchpad",
+
+    # Gaming & payment gateway (ZEP-031, ZEP-032)
+    "crates/zbx-gaming",
+    "crates/zbx-payment",
+
+    # Observability & tooling
+    "crates/zbx-metrics",
+    "crates/zbx-telemetry",
+    "crates/zbx-trace",
+    "crates/zbx-indexer",
+    "crates/zbx-explorer",
+    "crates/zbx-admin",
+    "crates/zbx-ai-precompile",
+    "crates/zbx-ai-sdk",
+    "crates/zbx-ai-registry",
+
+    # Cryptographic extras
+    "crates/zbx-threshold",
+    "crates/zbx-proto",
+    "crates/zbx-keystore",
+
+    # Post-quantum & privacy (ZEP-015, ZEP-025)
+    "crates/zbx-pq",
+    "crates/zbx-confidential",
+
+    # Client & SDK
+    "crates/zbx-sdk",
+    "crates/zbx-wallet",
+    "crates/zbx-cli",
+    "crates/zbx-light",
+    "crates/zbx-da",
+
+    # Node binary
+    "node",
+]
+resolver = "2"
+
+[workspace.package]
+authors     = ["Zebvix Technologies Pvt Ltd"]
+edition     = "2021"
+license     = "MIT"
+repository  = "https://github.com/zebvix/zebvix-chain"
+version     = "0.1.0"
+
+[profile.release]
+opt-level     = 3
+lto           = "fat"
+codegen-units = 1
+strip         = "symbols"
+panic         = "abort"
+
+[profile.dev]
+opt-level = 1
+debug     = true
+
+[profile.bench]
+opt-level     = 3
+lto           = "thin"
+codegen-units = 1
+
+[workspace.dependencies]
+# Serialization
+serde         = { version = "1", features = ["derive"] }
+serde_json    = "1"
+bincode       = "1"
+
+# Async runtime
+tokio         = { version = "1", features = ["full"] }
+futures       = "0.3"
+async-trait   = "0.1"
+
+# Logging & tracing
+tracing       = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Error handling
+thiserror     = "1"
+anyhow        = "1"
+
+# Crypto & hashing
+sha3          = "0.10"
+sha2          = "0.10"
+blake3        = "1"
+ed25519-dalek = { version = "2", features = ["rand_core"] }
+k256          = { version = "0.13", features = ["ecdsa"] }
+rand          = "0.8"
+rand_core     = "0.6"
+zeroize       = { version = "1", features = ["derive"] }
+hex           = "0.4"
+
+# Data structures & encoding
+bytes         = "1"
+smallvec      = "1"
+dashmap       = "5"
+parking_lot   = "0.12"
+indexmap      = "2"
+
+# Networking
+libp2p        = { version = "0.53", features = ["tcp", "noise", "yamux"] }
+quinn         = "0.11"
+
+# Storage
+rocksdb       = "0.21"
+
+# RPC / HTTP
+axum          = "0.7"
+hyper         = { version = "1", features = ["full"] }
+tower         = "0.4"

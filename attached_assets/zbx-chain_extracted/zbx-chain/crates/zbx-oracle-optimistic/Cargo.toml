@@ -1,0 +1,14 @@
+[package]
+name        = "zbx-oracle-optimistic"
+version     = "0.1.0"
+edition     = "2021"
+description = "Optimistic oracle with dispute game (ZEP-012, inspired by UMA)"
+
+[dependencies]
+zbx-types   = { path = "../zbx-types" }
+zbx-oracle  = { path = "../zbx-oracle" }
+serde       = { version = "1", features = ["derive"] }
+thiserror   = "1"
+tracing     = "0.1"
+hex         = "0.4"
+sha2        = "0.10"

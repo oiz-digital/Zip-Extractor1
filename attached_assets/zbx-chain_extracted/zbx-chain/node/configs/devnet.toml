@@ -1,0 +1,58 @@
+# Zebvix Devnet — local-development node configuration
+#
+# Devnet rides the testnet preset (chain_id 8990) — the Rust enum
+# `node::genesis::Network` only recognises Mainnet and Testnet, so this
+# preset is informational. The runtime selects via `--network testnet`
+# on the CLI even when this file is used.
+#
+# Keep `chain_id` in sync with `crates/zbx-types/src/lib.rs::CHAIN_ID_TESTNET`.
+# Differences from testnet.toml: data_dir is local, lower peer/cache limits,
+# verbose logging, dev-friendly RPC binding (0.0.0.0 vs 127.0.0.1), no rate
+# limit, mempool gas floor at 0.
+
+[chain]
+chain_id      = 8990
+genesis_file  = "./data/devnet/genesis.json"
+is_validator  = true
+validator_key = "./data/devnet/validator.key"
+
+[storage]
+data_dir       = "./data/devnet"
+max_open_files = 1024
+cache_size_mb  = 256
+
+# Task #15: production trie pruner (zbx_pruner::RocksDbPruner). Devnet uses
+# a tighter retention window for faster disk-shrink feedback during dev.
+[storage.pruner]
+enabled            = true
+interval_secs      = 60
+max_retained_roots = 128
+sweep_batch_size   = 1000
+min_height_advance = 0
+archive_mode       = false
+
+[network]
+listen_addr = "0.0.0.0"
+listen_port = 30303
+max_peers   = 25
+bootnodes   = []          # local-only by default; add peers manually
+nat         = "none"
+
+[consensus]
+block_time_ms        = 2000
+max_block_gas        = 30000000
+mempool_max_pending  = 10000
+mempool_max_queued   = 2000
+
+[rpc]
+http_enabled    = true
+http_port       = 8545
+ws_enabled      = true     # devnet exposes WS for tooling
+ws_port         = 8546
+bind_addr       = "0.0.0.0"
+cors_origins    = ["*"]
+rate_limit_rpm  = 0        # unlimited for devnet
+
+[metrics]
+enabled = true
+port    = 9100

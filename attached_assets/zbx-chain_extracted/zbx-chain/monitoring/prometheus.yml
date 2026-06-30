@@ -1,0 +1,49 @@
+# Prometheus configuration for Zebvix Chain monitoring.
+# Deploy with: prometheus --config.file=monitoring/prometheus.yml
+
+global:
+  scrape_interval:     15s
+  evaluation_interval: 15s
+  external_labels:
+    chain:   'zbx-mainnet'
+    chain_id: '8989'
+
+rule_files:
+  - "alerting_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['localhost:9093']
+
+scrape_configs:
+  # ── ZBX Node metrics ──────────────────────────────────────────────────────
+  - job_name: 'zbx-node'
+    static_configs:
+      - targets: ['localhost:9090']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  # ── Validator nodes ───────────────────────────────────────────────────────
+  - job_name: 'zbx-validators'
+    static_configs:
+      - targets:
+          - 'validator-1:9090'
+          - 'validator-2:9090'
+          - 'validator-3:9090'
+    labels:
+      role: 'validator'
+
+  # ── Archive node ─────────────────────────────────────────────────────────
+  - job_name: 'zbx-archive'
+    static_configs:
+      - targets: ['archive-node:9090']
+    labels:
+      role: 'archive'
+
+  # ── Bridge relayer ────────────────────────────────────────────────────────
+  - job_name: 'zbx-bridge'
+    static_configs:
+      - targets: ['bridge-relay:9090']
+    labels:
+      role: 'bridge'

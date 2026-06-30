@@ -1,0 +1,40 @@
+[package]
+name = "zbx-execution"
+version = "0.2.0"
+edition = "2021"
+authors = ["Zebvix Technologies Pvt Ltd"]
+description = "Block execution engine for Zebvix with parallel STM support"
+license = "MIT"
+
+[dependencies]
+zbx-types = { path = "../zbx-types" }
+zbx-crypto = { path = "../zbx-crypto" }
+zbx-storage = { path = "../zbx-storage" }
+zbx-state = { path = "../zbx-state" }
+zbx-evm = { path = "../zbx-evm" }
+# Task #2 (2026-05-09) — ZVM execution dispatch path. Executor branches
+# on `account.vm == VmKind::Zvm` and runs the ZVM interpreter via the
+# `ProductionZvmHost` adapter (see `host_zvm.rs`).
+zbx-zvm = { path = "../zbx-zvm" }
+# On-chain staking-tx pipeline. The executor needs
+# to recognise `to == STAKING_PRECOMPILE_ADDR` and route the call into
+# `zbx_staking::dispatch_staking_tx` (with `StateView` plugged in as
+# `BalanceAccess`). zbx-staking does NOT depend on zbx-execution, so no
+# circular dep.
+zbx-staking = { path = "../zbx-staking" }
+# S33-state-root W3b production wire-up (closes C-09): executor.rs uses
+# `zbx_trie::TrieDB` (trait bound on `BlockExecutor::execute_with_db`)
+# and `zbx_trie::trie::MemoryTrieDB` (turbofish on the legacy
+# `BlockExecutor::execute` fall-through path so the in-memory variant
+# still type-checks even when no persistent adapter is supplied).
+zbx-trie = { path = "../zbx-trie" }
+serde = { version = "1", features = ["derive"] }
+thiserror = "1"
+tracing = "0.1"
+rayon = "1.10"
+
+[dev-dependencies]
+# S33-state-root W3b production wire-up — `tests/state_root_persistent.rs`
+# spins up isolated RocksDB instances per test to exercise the StateView
+# ↔ ZbxDbTrieAdapter wiring + db-reopen durability.
+tempfile = "3"

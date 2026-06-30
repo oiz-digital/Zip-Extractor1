@@ -1,0 +1,22 @@
+[package]
+name        = "zbx-graphql"
+version     = "0.1.0"
+edition     = "2021"
+description = "Zebvix Chain GraphQL API — async-graphql server exposing blocks, txs, accounts, validators."
+license     = "Apache-2.0"
+
+[dependencies]
+zbx-types      = { path = "../zbx-types" }
+zbx-primitives = { path = "../zbx-primitives" }
+zbx-rpc        = { path = "../zbx-rpc" }
+async-graphql  = { version = "7", features = ["tracing", "apollo_tracing"] }
+tokio          = { version = "1", features = ["full"] }
+axum           = { version = "0.7", features = ["ws"] }
+serde          = { version = "1", features = ["derive"] }
+serde_json     = "1"
+thiserror      = "1"
+tracing        = "0.1"
+hex            = "0.4"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full"] }

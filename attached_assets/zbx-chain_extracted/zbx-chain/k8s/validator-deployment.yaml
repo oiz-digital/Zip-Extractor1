@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: zbx-validator
+  namespace: zebvix
+  labels:
+    app: zbx-validator
+    chain: zebvix-chain
+spec:
+  serviceName: zbx-validator
+  replicas: 4
+  selector:
+    matchLabels:
+      app: zbx-validator
+  template:
+    metadata:
+      labels:
+        app: zbx-validator
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+    spec:
+      terminationGracePeriodSeconds: 60
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: zbx-node
+          image: zebvix/node:v0.1.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - --config
+            - /etc/zbx/config.toml
+          ports:
+            - name: p2p-tcp
+              containerPort: 30303
+              protocol: TCP
+            - name: p2p-udp
+              containerPort: 30303
+              protocol: UDP
+            - name: rpc-http
+              containerPort: 8545
+            - name: rpc-ws
+              containerPort: 8546
+            - name: metrics
+              containerPort: 9090
+          volumeMounts:
+            - name: zbx-data
+              mountPath: /home/zbx/.zbx/data
+            - name: zbx-config
+              mountPath: /etc/zbx
+              readOnly: true
+            - name: zbx-keys
+              mountPath: /home/zbx/.zbx/keys
+              readOnly: true
+          resources:
+            requests:
+              cpu: "2"
+              memory: "8Gi"
+            limits:
+              cpu: "4"
+              memory: "16Gi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8545
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8545
+            initialDelaySeconds: 15
+            periodSeconds: 10
+      volumes:
+        - name: zbx-config
+          configMap:
+            name: zbx-validator-config
+        - name: zbx-keys
+          secret:
+            secretName: zbx-validator-keys
+  volumeClaimTemplates:
+    - metadata:
+        name: zbx-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: fast-ssd
+        resources:
+          requests:
+            storage: 500Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zbx-validator
+  namespace: zebvix
+spec:
+  selector:
+    app: zbx-validator
+  ports:
+    - name: p2p
+      port: 30303
+      targetPort: 30303
+    - name: rpc-http
+      port: 8545
+      targetPort: 8545
+    - name: rpc-ws
+      port: 8546
+      targetPort: 8546
+    - name: metrics
+      port: 9090
+      targetPort: 9090
+  type: ClusterIP

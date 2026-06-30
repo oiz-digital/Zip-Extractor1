@@ -1,0 +1,110 @@
+# ZBX Bridge Relayer (Kubernetes)
+# Monitors ZBX Chain and external chains for bridge events and relays proofs.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zbx-bridge-relayer
+  namespace: zbx-chain
+  labels:
+    app: zbx-bridge-relayer
+    component: bridge
+spec:
+  replicas: 3     # 3 replicas → 3-of-5 multisig (2 more run externally)
+  selector:
+    matchLabels:
+      app: zbx-bridge-relayer
+  template:
+    metadata:
+      labels:
+        app: zbx-bridge-relayer
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9093"
+    spec:
+      # Audit H-19: hardened pod-level security context. Bridge relayers
+      # custody the threshold signing key — they must NOT run as root with
+      # the default capability set.
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: relayer
+          image: zbvix/zbx-bridge-relayer:0.2.0
+          ports:
+            - containerPort: 8570   # Relayer P2P (for multisig coordination)
+            - containerPort: 9093   # Prometheus metrics
+          # Container-level hardening (audit H-19).
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          env:
+            - name: ZBX_RPC
+              value: "http://zbx-rpc:8545"
+            - name: ETH_RPC
+              valueFrom:
+                secretKeyRef:
+                  name: zbx-secrets
+                  key: eth-rpc-url
+            - name: BSC_RPC
+              valueFrom:
+                secretKeyRef:
+                  name: zbx-secrets
+                  key: bsc-rpc-url
+            - name: RELAYER_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: zbx-relayer-keys
+                  key: private-key
+            - name: CONFIRMATION_BLOCKS
+              value: "12"           # wait 12 blocks before relaying
+            - name: RUST_LOG
+              value: "zbx_bridge=info"
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2"
+              memory: "4Gi"
+          # Audit H-20: complete probe set. The previous spec had only a
+          # liveness probe, so a relayer that lost RPC connectivity but kept
+          # serving /health stayed in the load-balanced multisig set and
+          # silently dropped events.
+          startupProbe:
+            httpGet: { path: /health, port: 9093 }
+            failureThreshold: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet: { path: /ready, port: 9093 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 9093
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            failureThreshold: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zbx-bridge-relayer
+  namespace: zbx-chain
+spec:
+  selector:
+    app: zbx-bridge-relayer
+  ports:
+    - name: p2p
+      port: 8570
+      targetPort: 8570
+    - name: metrics
+      port: 9093
+      targetPort: 9093

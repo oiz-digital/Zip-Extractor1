@@ -1,0 +1,234 @@
+{
+  "_INSTRUCTIONS": {
+    "step1": "Run scripts/keygen.sh on EACH validator VPS to get addresses and BLS keys",
+    "step2": "Run deploy/genesis-fill.sh (interactive wizard) OR manually replace FILL_* values below",
+    "step3": "Copy this file to all validator nodes as config/mainnet-genesis.json",
+    "step4": "Run: zbx-node init --genesis config/mainnet-genesis.json --config config/mainnet.toml",
+    "step5": "Coordinate with all validators — verify genesis_hash matches on all nodes",
+    "step6": "Launch simultaneously: systemctl start zbx-mainnet"
+  },
+
+  "chain_id":    8989,
+  "chain_name":  "Zebvix Chain",
+  "timestamp":   "FILL_LAUNCH_TIMESTAMP_UTC",
+  "block_number": 0,
+  "block_gas_limit": 30000000,
+  "base_fee_initial": 1000000000,
+
+  "validators": [
+    {
+      "_note":        "Validator 1 — Genesis node operated by Zebvix Technologies",
+      "address":      "FILL_VALIDATOR_1_ETH_ADDRESS_0x40chars",
+      "bls_pubkey":   "FILL_VALIDATOR_1_BLS_PUBKEY_0x96chars",
+      "stake":        "100000000000000000000000",
+      "commission_bps": 500,
+      "name":         "Zebvix-Val-1"
+    },
+    {
+      "_note":        "Validator 2 — Genesis node",
+      "address":      "FILL_VALIDATOR_2_ETH_ADDRESS_0x40chars",
+      "bls_pubkey":   "FILL_VALIDATOR_2_BLS_PUBKEY_0x96chars",
+      "stake":        "100000000000000000000000",
+      "commission_bps": 500,
+      "name":         "Zebvix-Val-2"
+    },
+    {
+      "_note":        "Validator 3 — Genesis node",
+      "address":      "FILL_VALIDATOR_3_ETH_ADDRESS_0x40chars",
+      "bls_pubkey":   "FILL_VALIDATOR_3_BLS_PUBKEY_0x96chars",
+      "stake":        "100000000000000000000000",
+      "commission_bps": 500,
+      "name":         "Zebvix-Val-3"
+    },
+    {
+      "_note":        "Validator 4 — Genesis node (min 4 for BFT quorum)",
+      "address":      "FILL_VALIDATOR_4_ETH_ADDRESS_0x40chars",
+      "bls_pubkey":   "FILL_VALIDATOR_4_BLS_PUBKEY_0x96chars",
+      "stake":        "100000000000000000000000",
+      "commission_bps": 500,
+      "name":         "Zebvix-Val-4"
+    }
+  ],
+
+  "allocations": [
+    {
+      "_note":   "Foundation Multisig — use Gnosis Safe (6-of-10 recommended)",
+      "address": "FILL_FOUNDATION_MULTISIG_ADDRESS",
+      "balance": "9990000000000000000000000",
+      "comment": "Foundation (6.66%): ZBX for dev, ops, ecosystem"
+    },
+    {
+      "_note":   "ZbxAMM pool — deploy immutable ownerless contract first, use that address",
+      "address": "FILL_AMM_POOL_CONTRACT_ADDRESS",
+      "balance": "20000000000000000000000000",
+      "comment": "AMM genesis liquidity seed (13.33%): 20M ZBX — no admin, no pause, no upgrade"
+    },
+    {
+      "_note":   "Governance Treasury — use Gnosis Safe or ZbxGovernor timelock address",
+      "address": "FILL_TREASURY_GOVERNANCE_ADDRESS",
+      "balance": "5000000000000000000000000",
+      "comment": "Governance treasury (3.33%): community grants"
+    },
+    {
+      "_note":   "Team Vesting Contract — deploy VestingWallet contract, use that address",
+      "address": "FILL_TEAM_VESTING_CONTRACT_ADDRESS",
+      "balance": "3000000000000000000000000",
+      "comment": "Team vesting (2.0%): 4-year linear, 1-year cliff"
+    },
+    {
+      "_note":   "Ecosystem Grants — multisig controlled by ecosystem committee",
+      "address": "FILL_ECOSYSTEM_GRANTS_ADDRESS",
+      "balance": "2000000000000000000000000",
+      "comment": "Ecosystem grants (1.33%): developer fund"
+    }
+  ],
+
+  "token_allocations": [
+    {
+      "_note":   "ADMIN pre-mint — 20M ZUSD to foundation for AMM ZBX/ZUSD pool seeding",
+      "_how":    "No collateral needed at genesis — admin_mint bypasses ZusdVault collateral check",
+      "token":   "ZUSD",
+      "address": "FILL_FOUNDATION_MULTISIG_ADDRESS",
+      "amount":  "100000000000000000000000000",
+      "comment": "Admin pre-mint: 100,000,000 ZUSD → foundation → add to AMM pool at launch"
+    },
+    {
+      "_note":   "Treasury ZUSD reserve — for lending protocol stability + liquidity ops",
+      "token":   "ZUSD",
+      "address": "FILL_TREASURY_GOVERNANCE_ADDRESS",
+      "amount":  "5000000000000000000000000",
+      "comment": "Treasury reserve: 5,000,000 ZUSD for lending/stability"
+    }
+  ],
+
+  "zusd": {
+    "_note":                "ZUSD genesis config — ZusdVault is the only allowed minter post-genesis",
+    "total_genesis_supply": "105000000000000000000000000",
+    "vault_contract":       "FILL_ZUSD_VAULT_CONTRACT_ADDRESS",
+    "collateral_ratio":     150,
+    "admin_mint": {
+      "_note":   "One-time genesis privilege — disabled after block 1",
+      "enabled": true,
+      "address": "FILL_FOUNDATION_MULTISIG_ADDRESS",
+      "amount":  "100000000000000000000000000",
+      "comment": "100,000,000 ZUSD minted at genesis block (no collateral required)"
+    }
+  },
+
+  "contracts": {
+    "_note": "Pre-deployed system contracts at fixed addresses",
+    "ZbxEntryPoint": {
+      "address":  "0x0000000000000000000000000000000000000010",
+      "bytecode": "0x",
+      "comment":  "ERC-4337 EntryPoint — deploy-contracts.sh mainnet fills this"
+    },
+    "ZbxOracle": {
+      "address":  "0x0000000000000000000000000000000000000011",
+      "bytecode": "0x",
+      "comment":  "Price Oracle — deploy-contracts.sh mainnet fills this"
+    },
+    "RewardPool": {
+      "address":  "0x0000000000000000000000000000000000000012",
+      "bytecode": "0x",
+      "comment":  "Validator reward pool — deploy-contracts.sh mainnet fills this"
+    },
+    "ZusdVault": {
+      "address":  "FILL_ZUSD_VAULT_CONTRACT_ADDRESS",
+      "bytecode": "0x",
+      "comment":  "ZUSD minting vault — admin_mint enabled only at genesis"
+    }
+  },
+
+  "burn": {
+    "_note":           "Deflationary burn — 10% of every tx fee burned permanently until max cap reached",
+    "enabled":         true,
+    "fee_burn_bps":    1000,
+    "burn_address":    "0x000000000000000000000000000000000000dEaD",
+    "max_burn_supply": "75000000000000000000000000",
+    "_max_burn_note":  "75,000,000 ZBX max burn cap (50% of 150M total supply). Burning stops after this.",
+    "fee_distribution": {
+      "_note":       "How each transaction fee is split (basis points, total = 10000)",
+      "burn":        1000,
+      "validator":   6300,
+      "delegators":  1800,
+      "treasury":     900
+    }
+  },
+
+  "mining": {
+    "_note":                  "3.0 ZBX per block, halving every ~25M blocks (~3.97 years at 5s/block)",
+    "initial_reward":         "3000000000000000000",
+    "halving_interval_blocks": 25000000,
+    "total_mined_cap":        "120010000000000000000000000"
+  },
+
+  "consensus": {
+    "type":             "hotstuff-bft",
+    "round_timeout_ms": 5000,
+    "block_time_ms":    5000,
+    "min_validators":   4
+  },
+
+  "staking": {
+    "_note":                   "100 ZBX minimum to become a validator, 10 ZBX minimum per delegator",
+    "min_validator_stake":     "100000000000000000000",
+    "_min_validator_human":    "100 ZBX minimum to become a validator",
+    "min_delegation":          "10000000000000000000",
+    "_min_delegation_human":   "10 ZBX minimum per delegator",
+    "unbonding_period_blocks": 362880,
+    "max_validators":          100,
+    "slash_double_sign_pct":   5,
+    "slash_downtime_pct":      1
+  },
+
+  "amm": {
+    "_note":              "ZBX AMM — fully decentralized, ownerless, immutable pool",
+    "decentralized":      true,
+    "owner":              null,
+    "owner_renounced":    true,
+    "upgradeable":        false,
+    "pausable":           false,
+    "fee_changeable":     false,
+    "swap_fee_bps":       30,
+    "_swap_fee_note":     "0.30% swap fee — hardcoded, nobody can change it (not even admin)",
+    "fee_split": {
+      "lp_providers_bps": 25,
+      "protocol_burn_bps": 5,
+      "_note":            "0.25% → LP providers, 0.05% → burned (sent to 0x000...dEaD)"
+    },
+    "swap_limits": {
+      "_note":              "Anti-whale protection — enforced at contract level, nobody can bypass",
+      "max_buy_per_tx":     "50000000000000000000000",
+      "_max_buy_human":     "50,000 ZBX max per single swap transaction",
+      "max_sell_per_tx":    "50000000000000000000000",
+      "_max_sell_human":    "50,000 ZBX max per single sell transaction",
+      "max_impact_bps":     1500,
+      "_max_impact_note":   "Max 15% price impact per swap — tx reverts if slippage exceeds this",
+      "cooldown_blocks":    0,
+      "_cooldown_note":     "No per-wallet cooldown (anti-whale handled by per-tx limit only)"
+    },
+
+    "access_control": {
+      "add_liquidity":    "anyone",
+      "remove_liquidity": "only_lp_token_holder",
+      "swap":             "anyone",
+      "set_fee":          "nobody",
+      "pause":            "nobody",
+      "drain":            "nobody",
+      "upgrade":          "nobody",
+      "change_limits":    "nobody",
+      "_note":            "No admin key, no multisig, no timelock — pure code-is-law. Limits are hardcoded."
+    },
+    "deployment": {
+      "type":             "immutable",
+      "proxy":            false,
+      "renounce_tx":      "ownership renounced in deployment tx (constructor sets owner=address(0))",
+      "_verify_note":     "Verify on explorer: owner() returns 0x0000...0000"
+    }
+  },
+
+  "evm": {
+    "chain_id":  8989,
+    "hardfork":  "cancun"
+  }
+}

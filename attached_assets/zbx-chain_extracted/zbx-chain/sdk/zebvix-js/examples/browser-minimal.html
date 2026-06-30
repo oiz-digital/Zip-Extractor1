@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>zebvix.js — Browser Example</title>
+  <style>
+    body { font-family: monospace; max-width: 600px; margin: 40px auto; padding: 20px; }
+    input { width: 300px; padding: 4px; margin: 4px 0; }
+    button { padding: 6px 16px; cursor: pointer; }
+    pre { background: #111; color: #0f0; padding: 12px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h2>zebvix.js browser demo</h2>
+
+  <div>
+    <label>RPC: <input id="rpc" value="http://127.0.0.1:8545"></label>
+  </div>
+  <div style="margin-top:8px">
+    <button onclick="getInfo()">Chain Info</button>
+    <button onclick="getPrice()">ZBX Price</button>
+  </div>
+
+  <div style="margin-top:16px">
+    <label>Address: <input id="addr" placeholder="0x742d35..."></label>
+    <button onclick="getBalance()">Get Balance</button>
+    <button onclick="getZusd()">ZUSD Balance</button>
+  </div>
+
+  <div style="margin-top:8px">
+    <label>Pay ID: <input id="payid" placeholder="ali@zbx"></label>
+    <button onclick="resolvePayId()">Resolve</button>
+    <button onclick="checkPayId()">Check Available</button>
+  </div>
+
+  <div style="margin-top:8px">
+    <label>Bytecode: <input id="bytecode" placeholder="6003600401c200"></label>
+    <button onclick="disasm()">Disassemble</button>
+  </div>
+
+  <pre id="out">— output will appear here —</pre>
+
+  <script type="module">
+    // In production: import { ZbxClient } from "https://cdn.zebvix.io/zebvix.js@0.1.0/dist/index.mjs"
+    // For demo: inline minimal client
+
+    function getRpc() { return document.getElementById("rpc").value; }
+
+    async function rpc(method, params = []) {
+      const r = await fetch(getRpc(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+      });
+      const j = await r.json();
+      if (j.error) throw new Error(j.error.message);
+      return j.result;
+    }
+
+    function show(data) {
+      document.getElementById("out").textContent =
+        typeof data === "string" ? data : JSON.stringify(data, null, 2);
+    }
+
+    window.getInfo = async () => {
+      try {
+        const [chainIdHex, blockHex] = await Promise.all([
+          rpc("eth_chainId"), rpc("eth_blockNumber")
+        ]);
+        show({
+          chainId:  parseInt(chainIdHex, 16),
+          chainName: "Zebvix",
+          vm: "ZVM v1",
+          blockTime: "5 sec",
+          tipHeight: parseInt(blockHex, 16),
+        });
+      } catch(e) { show("Error: " + e.message); }
+    };
+
+    window.getPrice = async () => {
+      try {
+        const p = await rpc("zbx_getPriceUSD");
+        show(p);
+      } catch(e) { show("Error: " + e.message); }
+    };
+
+    window.getBalance = async () => {
+      try {
+        const addr = document.getElementById("addr").value;
+        const hex = await rpc("eth_getBalance", [addr, "latest"]);
+        const wei = BigInt(hex);
+        show({ address: addr, wei: wei.toString(), zbx: (Number(wei) / 1e18).toFixed(4) + " ZBX" });
+      } catch(e) { show("Error: " + e.message); }
+    };
+
+    window.getZusd = async () => {
+      try {
+        const addr = document.getElementById("addr").value;
+        const raw = await rpc("zbx_getZusdBalance", [addr]);
+        const wei = BigInt(raw || "0");
+        show({ address: addr, zusd: (Number(wei) / 1e18).toFixed(2) + " ZUSD" });
+      } catch(e) { show("Error: " + e.message); }
+    };
+
+    window.resolvePayId = async () => {
+      try {
+        const payId = document.getElementById("payid").value;
+        const addr = await rpc("zbx_resolvePayId", [payId]);
+        show(addr && addr !== "0x0000000000000000000000000000000000000000"
+          ? { payId, address: addr }
+          : { payId, found: false });
+      } catch(e) { show("Error: " + e.message); }
+    };
+
+    window.checkPayId = async () => {
+      try {
+        const payId = document.getElementById("payid").value;
+        const addr = await rpc("zbx_resolvePayId", [payId]);
+        const registered = addr && addr !== "0x0000000000000000000000000000000000000000";
+        show({ payId, registered, available: !registered });
+      } catch(e) { show("Error: " + e.message); }
+    };
+
+    window.disasm = () => {
+      const hex = document.getElementById("bytecode").value.replace(/^0x/, "");
+      const ZVM_NAMES = {
+        0x00:"STOP",0x01:"ADD",0x02:"MUL",0x03:"SUB",0x20:"KECCAK256",
+        0x54:"SLOAD",0x55:"SSTORE",0x56:"JUMP",0x57:"JUMPI",0x5b:"JUMPDEST",
+        0xf0:"CREATE",0xf1:"CALL",0xf3:"RETURN",0xfd:"REVERT",0xfe:"INVALID",
+        0xc0:"PAYID",0xc1:"ZUSDBAL",0xc2:"ZBXPRICE",0xc3:"ZBXTIME",
+        0xc4:"AASENDER",0xc5:"CHAINVER",0xc6:"BLOBFEE",0xc7:"PAYIDSET",
+        0xc8:"ZBXBURN",0xc9:"ZVMLOG",
+      };
+      const bytes = hex.match(/.{2}/g)?.map(b => parseInt(b, 16)) || [];
+      const lines = [];
+      let i = 0;
+      while (i < bytes.length) {
+        const b = bytes[i];
+        const pc = i.toString(16).padStart(4,"0");
+        if (b >= 0x60 && b <= 0x7f) {
+          const n = b - 0x5f;
+          const imm = bytes.slice(i+1, i+1+n).map(x => x.toString(16).padStart(2,"0")).join("");
+          lines.push(`\${pc}  \${b.toString(16).padStart(2,"0")}  PUSH\${n}  0x\${imm}`);
+          i += 1 + n;
+        } else {
+          const name = ZVM_NAMES[b] ?? `0x\${b.toString(16).padStart(2,"0")}`;
+          const zvm = b >= 0xc0 && b <= 0xc9 ? "  ← ZVM native" : "";
+          lines.push(`\${pc}  \${b.toString(16).padStart(2,"0")}  \${name}\${zvm}`);
+          i++;
+        }
+      }
+      show(lines.join("\\n"));
+    };
+  </script>
+</body>
+</html>

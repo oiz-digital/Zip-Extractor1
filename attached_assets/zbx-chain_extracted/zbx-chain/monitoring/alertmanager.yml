@@ -1,0 +1,35 @@
+# Alertmanager configuration for Zebvix Chain.
+
+global:
+  resolve_timeout: 5m
+  smtp_smarthost:  'smtp.zebvix.com:587'
+  smtp_from:       'alerts@zebvix.com'
+
+route:
+  group_by:        ['alertname', 'chain']
+  group_wait:      30s
+  group_interval:  5m
+  repeat_interval: 4h
+  receiver:        'zebvix-ops'
+  routes:
+    - match:
+        severity: critical
+      receiver:  'zebvix-pagerduty'
+      repeat_interval: 1h
+
+receivers:
+  - name: 'zebvix-ops'
+    email_configs:
+      - to: 'ops@zebvix.com'
+        require_tls: true
+
+  - name: 'zebvix-pagerduty'
+    pagerduty_configs:
+      - service_key: '\${PAGERDUTY_KEY}'
+
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'chain']

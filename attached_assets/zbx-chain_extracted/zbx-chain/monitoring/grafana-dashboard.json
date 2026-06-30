@@ -1,0 +1,77 @@
+{
+  "title": "Zebvix Chain — Node Dashboard",
+  "uid":   "zbx-node-main",
+  "tags":  ["zbx", "blockchain", "mainnet"],
+  "timezone": "browser",
+  "refresh": "5s",
+  "panels": [
+    {
+      "id":    1,
+      "title": "Chain Height",
+      "type":  "stat",
+      "targets": [{ "expr": "zbx_chain_height" }],
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" } } }
+    },
+    {
+      "id":    2,
+      "title": "Blocks Per Minute",
+      "type":  "graph",
+      "targets": [{ "expr": "rate(zbx_blocks_total[1m]) * 60" }]
+    },
+    {
+      "id":    3,
+      "title": "Transactions Per Second",
+      "type":  "graph",
+      "targets": [{ "expr": "rate(zbx_txs_total[1m])" }]
+    },
+    {
+      "id":    4,
+      "title": "Mempool Size",
+      "type":  "gauge",
+      "targets": [{ "expr": "zbx_mempool_size" }],
+      "fieldConfig": { "defaults": { "max": 10000, "thresholds": {
+        "steps": [
+          { "color": "green",  "value": 0 },
+          { "color": "yellow", "value": 5000 },
+          { "color": "red",    "value": 8000 }
+        ]
+      }}}
+    },
+    {
+      "id":    5,
+      "title": "Connected Peers",
+      "type":  "stat",
+      "targets": [{ "expr": "zbx_peer_count" }]
+    },
+    {
+      "id":    6,
+      "title": "Consensus Round",
+      "type":  "stat",
+      "targets": [{ "expr": "zbx_consensus_round" }]
+    },
+    {
+      "id":    7,
+      "title": "Block Time (ms)",
+      "type":  "graph",
+      "targets": [{ "expr": "histogram_quantile(0.95, zbx_block_time_seconds_bucket) * 1000" }]
+    },
+    {
+      "id":    8,
+      "title": "Gas Used Per Block",
+      "type":  "graph",
+      "targets": [{ "expr": "zbx_gas_used_per_block" }]
+    },
+    {
+      "id":    9,
+      "title": "Active Validators",
+      "type":  "stat",
+      "targets": [{ "expr": "zbx_validators_active" }]
+    },
+    {
+      "id":    10,
+      "title": "RPC Requests/sec",
+      "type":  "graph",
+      "targets": [{ "expr": "rate(zbx_rpc_requests_total[1m])" }]
+    }
+  ]
+}

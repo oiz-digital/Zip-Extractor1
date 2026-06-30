@@ -1,0 +1,148 @@
+# Zebvix Testnet — production node configuration
+# VPS: 93.127.213.192    RPC: https://rpc-testnet.zbx.io  (proxied to 127.0.0.1:18545)
+
+[chain]
+chain_id      = 8990
+genesis_file  = "/etc/zbx/genesis.testnet.json"
+is_validator  = false
+validator_key = ""
+# Task #4: EIP-4844 KZG point-evaluation precompile (0x0B). Testnet
+# uses the deterministic devnet trusted setup committed in-tree.
+# (NOT mainnet-safe — secret is recoverable from the source tree.)
+kzg_trusted_setup_path = "node/configs/trusted_setup_devnet.txt"
+
+# Task #7: Precompile 0x0F (ZUSD vault state direct-read). The genesis
+# loader MUST deploy `contracts/ZbxVaultRegistry.sol` at this canonical
+# address; on startup the node calls
+# `zbx_crypto::vault_state::assert_vault_deployed` against the same
+# `state.get_code(addr)` accessor the executor uses, and refuses to
+# boot if the address has no bytecode. Without the registry, every
+# 0x0F call returns the documented "non-existent vault" path
+# (128 zero bytes).
+zusd_vault_address = "0x0000000000000000000000000000000000005455"
+# Testnet: hard-fail boot when the canonical vault address is missing
+# from genesis allocs. Both mainnet and testnet presets pre-deploy the
+# registry as of Task #7.
+require_vault_genesis = true
+
+[storage]
+data_dir       = "/var/lib/zbx-testnet"
+max_open_files = 4096
+cache_size_mb  = 1024
+
+# Task #15: production trie pruner (zbx_pruner::RocksDbPruner). Mark-and-sweep
+# over Column::TrieNodes; coordination lock blocks sweep during commit.
+[storage.pruner]
+enabled            = true
+interval_secs      = 60     # background cadence
+max_retained_roots = 128    # keep last N (block, state_root) reachable
+sweep_batch_size   = 1000
+min_height_advance = 0
+archive_mode       = false
+
+[network]
+listen_addr = "0.0.0.0"
+listen_port = 30304
+max_peers   = 50
+bootnodes   = [
+  "93.127.213.192:30304",
+]
+nat = "any"
+
+[consensus]
+block_time_ms        = 5000
+max_block_gas        = 30000000
+mempool_max_pending  = 5000
+mempool_max_queued   = 2000
+
+[rpc]
+http_enabled    = true
+http_port       = 18545
+ws_enabled      = true    # WebSocket active on testnet (eth_subscribe: newHeads, newPendingTransactions, logs)
+ws_port         = 18546
+bind_addr       = "127.0.0.1"
+cors_origins    = ["*"]
+rate_limit_rpm  = 1200
+
+[metrics]
+enabled = true
+port    = 9001
+
+# ─── Oracle subsystem (zbx-oracle, ZEP-011) ──────────────────────────────────
+[oracle]
+enabled              = true
+report_interval_secs = 30      # Faster on testnet for rapid feedback
+is_reporter          = false
+feeds                = ["ZBX/USD", "ZUSD/USD", "ETH/USD", "BTC/USD", "BNB/USD", "USD/INR"]
+aggregator_address   = "0x0000000000000000000000000000000000006001"
+heartbeat_secs       = 1800    # 30 min heartbeat on testnet
+deviation_threshold  = "0.01"  # 1% — wider threshold on testnet
+
+# ─── ERC-4337 Account Abstraction Bundler (zbx-bundler, ZEP-017) ─────────────
+[bundler]
+enabled            = true
+rpc_port           = 14337     # Testnet bundler port
+entry_point        = "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789"
+max_bundle_size    = 50
+max_userop_gas     = 5000000
+mempool_max        = 500
+simulation_timeout_ms = 5000
+
+# ─── MEV Protection (zbx-mev) ────────────────────────────────────────────────
+[mev]
+enabled                 = true
+private_pool_enabled    = true
+commit_reveal_enabled   = true
+pbs_enabled             = true
+redistribution_enabled  = true
+staker_share_bps        = 3000
+community_share_bps     = 7000
+community_fund_address  = "0x0000000000000000000000000000000000007001"
+
+# ─── Chain Synchronization (zbx-sync) ────────────────────────────────────────
+[sync]
+mode                     = "live"
+snap_pivot_lag_blocks    = 64
+snap_chunk_size_kb       = 512
+fast_sync_batch_size     = 32
+max_sync_peers           = 5
+
+# ─── Data Availability Layer (zbx-da, ZEP-003) ───────────────────────────────
+[da]
+enabled               = true
+blob_prune_enabled    = true
+blob_prune_window     = 518400
+max_blobs_per_block   = 8
+blob_rpc_enabled      = true
+
+# ─── Telemetry (zbx-telemetry) ───────────────────────────────────────────────
+[telemetry]
+enabled          = true
+json_logs        = true
+otlp_endpoint    = ""
+prometheus_port  = 9001
+log_filter       = "info,zbx_consensus=debug"  # More verbose on testnet
+
+# ─── XCL Cross-Chain Layer (zbx-xcl, ZEP-026) ────────────────────────────────
+[xcl]
+enabled              = true
+light_client_sync    = true
+channel_timeout_secs = 1800  # 30 min timeout on testnet
+
+# ─── Block + Event Indexer (zbx-indexer, ZEP-007) ────────────────────────────
+# Opt-in heavy I/O subsystem. Set `enabled = true` to activate.
+# REST API: http://localhost:13100/v1/transactions  /v1/tvl/*  /healthz
+[indexer]
+enabled              = false                      # flip to true to activate on testnet nodes
+backend              = "sqlite"                   # "sqlite" default; "postgres" = future
+db_path              = "/var/lib/zbx-testnet/indexer.db"
+postgres_url         = ""                         # set for production clusters
+api_enabled          = true
+api_port             = 13100                      # testnet indexer API port
+# TVL oracle: leave empty until ZbxTvlOracle.sol is deployed on testnet.
+tvl_oracle_address   = ""
+tvl_poll_secs        = 60
+batch_size           = 100
+index_traces         = true
+decode_transfers     = true
+writer_threads       = 4

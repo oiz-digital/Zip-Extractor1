@@ -1,0 +1,64 @@
+syntax = "proto3";
+package zbx.node.v1;
+
+option go_package = "github.com/zbvix/zbx-chain/proto/node/v1;nodev1";
+
+// ZBX Node gRPC service — used for inter-node communication.
+service ZbxNode {
+    // Broadcast a signed block proposal.
+    rpc ProposeBlock(ProposeBlockRequest) returns (ProposeBlockResponse);
+    // Get a block by number or hash.
+    rpc GetBlock(GetBlockRequest)         returns (GetBlockResponse);
+    // Stream new blocks as they are finalised.
+    rpc SubscribeBlocks(SubscribeBlocksRequest) returns (stream BlockEvent);
+    // Fetch pending transactions.
+    rpc GetPendingTxs(GetPendingTxsRequest) returns (GetPendingTxsResponse);
+    // Submit a signed transaction.
+    rpc SubmitTransaction(SubmitTransactionRequest) returns (SubmitTransactionResponse);
+    // Node health and status.
+    rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
+}
+
+message ProposeBlockRequest {
+    bytes block_rlp   = 1;  // RLP-encoded block
+    bytes signature   = 2;  // proposer's signature
+}
+message ProposeBlockResponse { bool accepted = 1; string reason = 2; }
+
+message GetBlockRequest {
+    oneof identifier {
+        uint64 number = 1;
+        bytes  hash   = 2;
+    }
+    bool include_txs = 3;
+}
+message GetBlockResponse {
+    bytes  block_rlp    = 1;
+    bool   found        = 2;
+}
+
+message SubscribeBlocksRequest { uint64 from_block = 1; }
+message BlockEvent {
+    uint64 block_number = 1;
+    bytes  block_hash   = 2;
+    uint64 timestamp    = 3;
+    uint64 tx_count     = 4;
+    bytes  state_root   = 5;
+}
+
+message GetPendingTxsRequest { uint32 max_count = 1; }
+message GetPendingTxsResponse { repeated bytes tx_rlps = 1; }
+
+message SubmitTransactionRequest { bytes tx_rlp = 1; }
+message SubmitTransactionResponse { bool accepted = 1; string tx_hash = 2; string error = 3; }
+
+message GetStatusRequest {}
+message GetStatusResponse {
+    uint64 chain_id         = 1;
+    uint64 block_number     = 2;
+    bytes  block_hash       = 3;
+    uint32 peer_count       = 4;
+    bool   is_syncing       = 5;
+    string version          = 6;
+    double uptime_seconds   = 7;
+}

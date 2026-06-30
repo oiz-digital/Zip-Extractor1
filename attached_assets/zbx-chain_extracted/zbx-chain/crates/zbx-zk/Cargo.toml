@@ -1,0 +1,25 @@
+[package]
+name = "zbx-zk"
+version = "0.3.0"
+edition = "2021"
+description = "ZK verifier for ZBX (Groth16 over BN254 — pairing-checked, on-chain compatible; PLONK fail-closed pending ark-plonk)"
+
+[dependencies]
+zbx-primitives = { path = "../zbx-primitives" }
+serde    = { version = "1", features = ["derive"] }
+sha3     = "0.10"
+tracing  = "0.1"
+thiserror = "1"
+
+# S26: real Groth16 over BN254 — same curve as Ethereum precompiles 0x06/0x07/0x08
+ark-bn254     = "0.4"
+ark-groth16   = "0.4"
+ark-ec        = "0.4"
+ark-ff        = "0.4"
+ark-serialize = "0.4"
+ark-snark     = "0.4"
+ark-std       = { version = "0.4", features = ["std"] }
+ark-relations = "0.4"
+rand          = "0.8"
+zbx-types  = { path = "../zbx-types" }
+ark-poly      = "0.4"

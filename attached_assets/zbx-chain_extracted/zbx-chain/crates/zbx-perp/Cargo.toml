@@ -1,0 +1,14 @@
+[package]
+name        = "zbx-perp"
+version     = "0.1.0"
+edition     = "2021"
+authors     = ["Zebvix Technologies Pvt Ltd"]
+description = "On-chain perpetual futures engine for ZBX Chain (ZEP-034 rev4) — multi-market, 200× leverage, isolated + cross margin, SL/TP/trailing-stop, keeper liquidations"
+license     = "MIT"
+
+[dependencies]
+zbx-types  = { path = "../zbx-types" }
+zbx-oracle = { path = "../zbx-oracle" }
+serde      = { version = "1", features = ["derive"] }
+thiserror  = "1"
+tracing    = "0.1"

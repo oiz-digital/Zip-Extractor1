@@ -1,0 +1,127 @@
+# Validator-specific alerts — mainnet (chain_id 8989).
+#
+# These alerts page on conditions that indicate an individual validator
+# is at risk of slashing or has already misbehaved. Wire into the same
+# Alertmanager as monitoring/alerts/chain.yml.
+
+groups:
+  - name: zebvix_validator
+    rules:
+
+      # ── Slashing-imminent: any equivocation alert is a SEV-1 page ───────────
+      - alert: EquivocationDetected
+        expr: increase(zbx_equivocation_alerts_total[1m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+          team: ops
+          slashable: "true"
+        annotations:
+          summary: "Validator {{ $labels.address }} signed two conflicting messages at the same height"
+          description: |
+            zbx_equivocation_alerts_total has increased on {{ $labels.instance }}.
+            This is a SLASHABLE OFFENSE. The validator may already be slashed.
+            Immediate action: stop the validator process, take both nodes offline,
+            then investigate — usually a "key copied to two machines" incident.
+          runbook: "https://docs.zebvix.com/runbooks/equivocation"
+
+      # ── Signing absence: 5 misses in 1h → page; 50 misses → SEV-1 ──────────
+      - alert: ValidatorSigningAbsenceMinor
+        expr: increase(zbx_signing_misses_total[1h]) >= 5
+        for: 5m
+        labels:
+          severity: warning
+          team: ops
+        annotations:
+          summary: "Validator {{ $labels.address }} missed {{ $value }} sign rounds in the last hour"
+          description: |
+            Validator on {{ $labels.instance }} has missed enough rounds to risk
+            its uptime SLA. Check: network connectivity, RPC reachability, HSM
+            signer agent status, peer count.
+
+      - alert: ValidatorSigningAbsenceMajor
+        expr: increase(zbx_signing_misses_total[1h]) >= 50
+        for: 1m
+        labels:
+          severity: critical
+          team: ops
+        annotations:
+          summary: "Validator {{ $labels.address }} missed {{ $value }} sign rounds — jailing imminent"
+          description: |
+            >=50 misses in 1h on {{ $labels.instance }}. The on-chain jailing
+            threshold may be reached within minutes. Investigate immediately
+            and either restore signing OR proactively remove the validator
+            via `validator-remove` to avoid a jail penalty.
+          runbook: "https://docs.zebvix.com/runbooks/signing-absence"
+
+      # ── HSM / signer health ────────────────────────────────────────────────
+      - alert: ValidatorSignerUnreachable
+        expr: zbx_signer_healthy == 0
+        for: 30s
+        labels:
+          severity: critical
+          team: ops
+        annotations:
+          summary: "HSM/signer agent for {{ $labels.address }} is unreachable"
+          description: |
+            The validator process cannot reach its signing backend (HSM,
+            Ledger, or local file). Signing will fail until restored, and
+            misses will accumulate. Check the signer sidecar service and
+            USB/network path to the HSM device.
+
+      # ── Stake under MIN_STAKE → validator is about to be auto-removed ──────
+      - alert: ValidatorStakeBelowMin
+        expr: zbx_validator_stake_wei < 1e20  # 100 ZBX with 18 decimals
+        for: 5m
+        labels:
+          severity: critical
+          team: ops
+        annotations:
+          summary: "Validator {{ $labels.address }} stake fell below MIN_STAKE (100 ZBX)"
+          description: |
+            Stake on {{ $labels.instance }} = {{ $value }} wei < 100 ZBX.
+            The staking_escrow will auto-remove this validator at the next
+            epoch boundary. Top up stake immediately to avoid removal:
+              zbx-node stake-deposit --signer-key ... --amount <wei>
+
+      # ── Validator is jailed ────────────────────────────────────────────────
+      - alert: ValidatorJailed
+        expr: zbx_validator_jailed == 1
+        for: 0m
+        labels:
+          severity: critical
+          team: ops
+        annotations:
+          summary: "Validator {{ $labels.address }} has been JAILED"
+          description: |
+            The on-chain staking_escrow has marked this validator as Jailed.
+            Block production has stopped. Investigate the cause (usually
+            signing absence or a partial slash), then either unjail (if
+            policy permits) or withdraw stake.
+
+      # ── Voting power drift between local view and on-chain set ─────────────
+      - alert: ValidatorViewDrift
+        expr: abs(zbx_local_voting_power - zbx_chain_voting_power) > 0
+        for: 2m
+        labels:
+          severity: warning
+          team: ops
+        annotations:
+          summary: "Validator {{ $labels.address }} has a stale view of its own voting power"
+          description: |
+            Local view = {{ $value }} ; on-chain view differs.
+            Usually transient (set just changed). Investigate if it persists >2m —
+            could indicate a stuck state-sync or a corrupted local DB.
+
+      # ── Peer asymmetry: I see fewer peers than the chair node ──────────────
+      - alert: ValidatorPeerAsymmetry
+        expr: zbx_peer_count < (avg by () (zbx_peer_count) * 0.5)
+        for: 5m
+        labels:
+          severity: warning
+          team: ops
+        annotations:
+          summary: "Validator {{ $labels.address }} has half (or fewer) peers than the cluster average"
+          description: |
+            Network partition or eclipse-attack symptom. Cross-check the bootnode
+            list, NAT config, and outbound firewall.

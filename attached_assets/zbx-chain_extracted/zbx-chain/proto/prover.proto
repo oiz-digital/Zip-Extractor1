@@ -1,0 +1,57 @@
+syntax = "proto3";
+package zbx.prover.v1;
+
+// ZBX ZK Prover gRPC service.
+// Nodes use this to request ZK proofs from the prover service.
+service ZbxProver {
+    // Generate a ZK state proof for a single account.
+    rpc GetStateProof(StateProofRequest)   returns (StateProofResponse);
+    // Generate a full block execution proof.
+    rpc GetBlockProof(BlockProofRequest)   returns (stream BlockProofChunk);
+    // Verify an existing proof (light-weight check).
+    rpc VerifyProof(VerifyProofRequest)    returns (VerifyProofResponse);
+    // Get prover status and queue depth.
+    rpc GetStatus(ProverStatusRequest)     returns (ProverStatusResponse);
+}
+
+message StateProofRequest {
+    bytes  address       = 1;  // 20-byte account address
+    repeated bytes storage_keys = 2;  // storage slots to include
+    uint64 block_number  = 3;
+}
+message StateProofResponse {
+    bytes  proof       = 1;   // serialised StateProof
+    bytes  state_root  = 2;   // block's state root
+    uint64 gas_used    = 3;   // proof generation cost
+    bool   success     = 4;
+    string error       = 5;
+}
+
+message BlockProofRequest {
+    uint64 block_number = 1;
+    bool   recursive    = 2;  // aggregate into recursive proof
+}
+// Block proof streamed in chunks (can be large: 10-100 MB).
+message BlockProofChunk {
+    uint64 offset       = 1;
+    bytes  data         = 2;
+    bool   is_last      = 3;
+    uint64 total_size   = 4;
+}
+
+message VerifyProofRequest {
+    bytes  proof       = 1;
+    bytes  state_root  = 2;
+    string proof_type  = 3;  // "state", "block", "recursive"
+}
+message VerifyProofResponse { bool valid = 1; string error = 2; }
+
+message ProverStatusRequest {}
+message ProverStatusResponse {
+    bool   available           = 1;
+    uint32 queue_depth         = 2;
+    uint64 proofs_generated    = 3;
+    string mode                = 4;  // "cpu" or "gpu"
+    uint32 gpu_count           = 5;
+    double avg_proof_time_ms   = 6;
+}

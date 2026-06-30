@@ -1,0 +1,11 @@
+[package]
+name = "zbx-executor"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+zbx-primitives = { path = "../zbx-primitives" }
+zbx-tx         = { path = "../zbx-tx" }
+serde          = { version = "1", features = ["derive"] }
+tracing        = "0.1"
+sha3           = "0.10"

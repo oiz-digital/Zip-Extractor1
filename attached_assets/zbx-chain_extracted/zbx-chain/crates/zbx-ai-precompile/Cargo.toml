@@ -1,0 +1,29 @@
+[package]
+name        = "zbx-ai-precompile"
+version     = "2.0.0"
+edition     = "2021"
+description = "AI inference ZVM precompile — opcode 0xCA AIINFER (ZEP-009, Session 42)"
+
+[dependencies]
+zbx-types = { path = "../zbx-types" }
+thiserror = "1"
+serde     = { version = "1", features = ["derive"] }
+tracing   = "0.1"
+sha3      = "0.10"
+hex       = "0.4"
+
+[dev-dependencies]
+tempfile = "3"
+
+[features]
+# OPERATOR NOTE: Do NOT enable the `stub` feature in production / mainnet builds.
+# Stub mode returns deterministic fake inference results — it is only for
+# local development and CI.  Production nodes must compile WITHOUT this flag
+# so that the real inference engine (INT8 quantised forward pass) is used.
+#
+# Build commands:
+#   dev / CI:      cargo build                     (default = [], stub disabled)
+#   explicit stub: cargo build --features stub      (only for local testing)
+#   production:    cargo build --release             (stub disabled by default)
+default = []
+stub    = []

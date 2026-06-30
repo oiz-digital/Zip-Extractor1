@@ -1,0 +1,52 @@
+[package]
+name = "zbx-crypto"
+version = "0.2.0"
+edition = "2021"
+authors = ["Zebvix Technologies Pvt Ltd"]
+description = "Cryptographic primitives for Zebvix: secp256k1, keccak256, BLS12-381, VRF, Merkle"
+license = "MIT"
+
+[dependencies]
+zbx-types = { path = "../zbx-types" }
+sha3 = "0.10"
+sha2 = "0.10"
+# bls12_381 0.8's `experimental` feature is wired against the older
+# digest 0.9 trait family. Our main `sha2 = "0.10"` Sha256 doesn't satisfy
+# `ExpandMsgXmd<H>`'s bounds in that crate, so pull a thin sha2 v0.9
+# alongside *only* for hash-to-curve. Both sha2 versions coexist cleanly
+# in the lockfile (the v0.9 dep is small and only used by `bls.rs`).
+sha2_v09 = { package = "sha2", version = "0.9", default-features = false }
+hmac = "0.12"
+pbkdf2 = "0.12"
+hex = "0.4"
+thiserror = "1"
+serde = { version = "1", features = ["derive"] }
+serde-big-array = "0.5"
+rand = "0.8"
+zeroize = { version = "1", features = ["derive"] }
+k256 = { version = "0.13", features = ["ecdsa", "ecdh", "arithmetic"] }
+elliptic-curve = "0.13"
+generic-array = "0.14"
+# Real BLS12-381 pairing-based aggregation. The `experimental` feature
+# enables IETF hash-to-curve (RFC 9380) for G2, which is what makes the
+# `sign(msg) = sk · H(msg)` construction sound.
+bls12_381 = { version = "0.8", features = ["experimental", "pairings"] }
+group = "0.13"
+ff = "0.13"
+pairing = "0.23"
+# Task #6 (Precompile 0x0E — VRF verification, RFC 9381
+# ECVRF-EDWARDS25519-SHA512-ELL2). curve25519-dalek already a workspace
+# dep via zbx-confidential; pinning the same major (4) prevents lockfile
+# duplication. num-bigint is needed only for the Elligator2 hash-to-curve
+# field arithmetic (a handful of ops mod p = 2^255 - 19 — dalek's
+# FieldElement isn't `pub`, and BigUint::modpow gives us inverses +
+# Legendre-symbol exponentiations cleanly).
+curve25519-dalek = { version = "4", default-features = false, features = ["alloc"] }
+num-bigint = "0.4"
+num-traits = "0.2"
+# Task #7 (Precompile 0x0F — ZUSD vault state read): U256 arithmetic for
+# c_ratio + liq_price derivation. Same major as zbx-types pin.
+primitive-types = "0.12"
+[features]
+default = []
+testing = []

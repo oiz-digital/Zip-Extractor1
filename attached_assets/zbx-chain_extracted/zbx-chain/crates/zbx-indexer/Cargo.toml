@@ -1,0 +1,26 @@
+[package]
+name    = "zbx-indexer"
+version = "0.1.0"
+edition = "2021"
+authors = ["Zebvix Technologies <dev@zebvix.com>"]
+description = "On-chain event and transaction indexer for Zebvix Chain"
+license     = "Apache-2.0"
+
+[dependencies]
+zbx-types   = { path = "../zbx-types" }
+zbx-storage = { path = "../zbx-storage" }
+zbx-rpc    = { path = "../zbx-rpc" }
+zbx-sdk    = { path = "../zbx-sdk" }
+zbx-crypto = { path = "../zbx-crypto" }
+thiserror = "1"
+anyhow    = "1"
+hex       = "0.4"
+tracing   = "0.1"
+tokio     = { version = "1", features = ["full"] }
+serde     = { version = "1", features = ["derive"] }
+serde_json = "1"
+rusqlite  = { version = "0.31", features = ["bundled"] }
+tokio-rusqlite = "0.5"
+axum      = "0.7"
+tower     = "0.4"
+tower-http = { version = "0.5", features = ["cors"] }

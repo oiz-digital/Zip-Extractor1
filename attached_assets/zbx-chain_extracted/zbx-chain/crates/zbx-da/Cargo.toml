@@ -1,0 +1,28 @@
+[package]
+name = "zbx-da"
+version = "0.1.0"
+edition = "2021"
+description = "Zebvix Chain — Data Availability layer (blob storage, KZG proofs, sampling)"
+
+[dependencies]
+zbx-types    = { path = "../zbx-types" }
+zbx-crypto   = { path = "../zbx-crypto" }
+zbx-storage  = { path = "../zbx-storage" }
+zbx-metrics  = { path = "../zbx-metrics" }
+serde        = { version = "1", features = ["derive"] }
+serde-big-array = "0.5"
+serde_json   = "1"
+sha2         = "0.10"
+hex          = "0.4"
+# Real BLS12-381 pairing for KZG blob-proof verification (EIP-4844 compatible).
+# Same crate as zbx-crypto — pairings feature enables multi_miller_loop + final_exp.
+bls12_381    = { version = "0.8", features = ["pairings"] }
+group        = "0.13"
+ff           = "0.13"
+thiserror    = "1"
+tracing      = "0.1"
+tokio        = { version = "1", features = ["full"] }
+async-trait  = "0.1"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full", "test-util"] }

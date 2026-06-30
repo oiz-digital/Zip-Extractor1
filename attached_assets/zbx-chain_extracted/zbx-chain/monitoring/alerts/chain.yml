@@ -1,0 +1,63 @@
+# Chain liveness and finality alerts.
+groups:
+  - name: zebvix_chain
+    rules:
+      - alert: ChainStalled
+        expr: increase(zbx_blocks_imported_total[5m]) == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: ops
+        annotations:
+          summary: "Chain has not produced blocks for 5 minutes"
+          description: "Node {{ $labels.instance }} has not imported any blocks in the last 5 minutes."
+          runbook: "https://docs.zebvix.com/runbooks/chain-stalled"
+
+      - alert: ConsensusFinalityDelayed
+        expr: zbx_chain_height - zbx_consensus_view > 100
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Finality is lagging behind chain height"
+          description: "Finality is {{ $value }} blocks behind the tip on {{ $labels.instance }}"
+
+      - alert: HighViewChangeRate
+        expr: rate(zbx_view_changes_total[5m]) > 0.5
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High consensus view-change rate"
+
+      - alert: MempoolSaturated
+        expr: zbx_mempool_pending > 80000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Mempool near capacity ({{ $value }} pending txs)"
+
+      - alert: PeerCountLow
+        expr: zbx_peer_count < 3
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Node {{ $labels.instance }} has only {{ $value }} peers"
+
+      - alert: HighRpcErrorRate
+        expr: rate(zbx_rpc_errors_total[5m]) / rate(zbx_rpc_requests_total[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "RPC error rate > 5% on {{ $labels.instance }}"
+
+      - alert: DiskSpaceLow
+        expr: node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"} < 0.1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Disk < 10% free on {{ $labels.instance }}"

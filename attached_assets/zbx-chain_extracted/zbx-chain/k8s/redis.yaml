@@ -1,0 +1,61 @@
+# Redis — RPC response cache for ZBX Chain.
+# Caches eth_call results, block data, token balances to reduce RPC latency.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zbx-redis
+  namespace: zbx-chain
+  labels:
+    app: zbx-redis
+    component: cache
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zbx-redis
+  template:
+    metadata:
+      labels:
+        app: zbx-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          args:
+            - redis-server
+            - --maxmemory 2gb
+            - --maxmemory-policy allkeys-lru
+            - --save ""            # no persistence (cache only)
+            - --requirepass \$(REDIS_PASSWORD)
+          ports:
+            - containerPort: 6379
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: zbx-secrets
+                  key: redis-password
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "2Gi"
+            limits:
+              cpu: "2"
+              memory: "4Gi"
+          livenessProbe:
+            exec:
+              command: [redis-cli, ping]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zbx-redis
+  namespace: zbx-chain
+spec:
+  selector:
+    app: zbx-redis
+  ports:
+    - port: 6379
+      targetPort: 6379

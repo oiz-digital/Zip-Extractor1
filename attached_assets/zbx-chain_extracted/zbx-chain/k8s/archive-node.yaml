@@ -1,0 +1,78 @@
+# ZBX Archive Node (Kubernetes)
+# Full state history for explorers, analytics, ZK provers.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: zbx-archive
+  namespace: zbx-chain
+  labels:
+    app: zbx-archive
+    component: archive
+spec:
+  replicas: 1
+  serviceName: zbx-archive
+  selector:
+    matchLabels:
+      app: zbx-archive
+  template:
+    metadata:
+      labels:
+        app: zbx-archive
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+    spec:
+      containers:
+        - name: archive
+          image: zbvix/zbx-node:latest
+          args: ["node", "--archive", "--config", "/config/mainnet.toml"]
+          ports:
+            - containerPort: 8545  # HTTP RPC
+            - containerPort: 8546  # WS RPC
+            - containerPort: 9090  # Prometheus
+          env:
+            - name: RUST_LOG
+              value: "zbx=info"
+            - name: ZBX_ARCHIVE
+              value: "true"
+          resources:
+            requests:
+              cpu: "8"
+              memory: "32Gi"
+            limits:
+              cpu: "32"
+              memory: "128Gi"
+          volumeMounts:
+            - name: data
+              mountPath: /data/zbx
+            - name: config
+              mountPath: /config
+      volumes:
+        - name: config
+          configMap:
+            name: zbx-config
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources:
+          requests:
+            storage: 4Ti   # 4 TB for full archive
+        storageClassName: ssd
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zbx-archive
+  namespace: zbx-chain
+spec:
+  selector:
+    app: zbx-archive
+  ports:
+    - name: rpc
+      port: 8545
+      targetPort: 8545
+    - name: ws
+      port: 8546
+      targetPort: 8546

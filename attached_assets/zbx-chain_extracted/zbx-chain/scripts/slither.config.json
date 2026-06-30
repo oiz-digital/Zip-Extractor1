@@ -1,0 +1,10 @@
+{
+  "detectors_to_exclude": "naming-convention,solc-version,pragma,assembly,low-level-calls",
+  "exclude_informational": true,
+  "exclude_low": true,
+  "exclude_optimization": true,
+  "filter_paths": "test/,libraries/openzeppelin,interfaces/openzeppelin",
+  "solc_remaps": [],
+  "compile_force_framework": "foundry",
+  "json": "-"
+}

@@ -1,0 +1,93 @@
+{
+  "__inputs": [],
+  "__requires": [],
+  "annotations": { "list": [] },
+  "description": "Zebvix Chain — operational dashboard",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": true,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "title": "Chain Overview",
+      "type": "row"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "thresholds" }, "mappings": [], "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 5000000 }
+          ]}
+        }
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 1 },
+      "id": 1,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "orientation": "auto", "textMode": "auto", "colorMode": "background" },
+      "title": "Chain Height",
+      "type": "stat",
+      "targets": [{ "expr": "zbx_chain_height", "legendFormat": "Height" }]
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 1 },
+      "id": 2,
+      "title": "Active Peers",
+      "type": "stat",
+      "targets": [{ "expr": "zbx_peer_count", "legendFormat": "Peers" }]
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 1 },
+      "id": 3,
+      "title": "Mempool Size",
+      "type": "stat",
+      "targets": [{ "expr": "zbx_mempool_pending", "legendFormat": "Pending Txs" }]
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 1 },
+      "id": 4,
+      "title": "Consensus View",
+      "type": "stat",
+      "targets": [{ "expr": "zbx_consensus_view", "legendFormat": "View" }]
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "unit": "ms", "custom": { "lineWidth": 2, "fillOpacity": 10 } } },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 5 },
+      "id": 10,
+      "title": "Block Processing Time (ms)",
+      "type": "timeseries",
+      "targets": [{ "expr": "histogram_quantile(0.99, rate(zbx_block_process_ms_bucket[5m]))", "legendFormat": "p99" },
+                  { "expr": "histogram_quantile(0.50, rate(zbx_block_process_ms_bucket[5m]))", "legendFormat": "p50" }]
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "lineWidth": 2 } } },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 5 },
+      "id": 11,
+      "title": "Transactions per Block",
+      "type": "timeseries",
+      "targets": [{ "expr": "histogram_quantile(0.50, rate(zbx_txs_per_block_bucket[5m]))", "legendFormat": "median txs/block" }]
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 38,
+  "tags": ["zebvix", "blockchain"],
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "UTC",
+  "title": "Zebvix Chain",
+  "uid": "zbx-main",
+  "version": 1
+}

@@ -1,0 +1,19 @@
+[package]
+name = "zbx-network"
+version = "0.2.0"
+edition = "2021"
+authors = ["Zebvix Technologies Pvt Ltd"]
+description = "P2P networking layer for Zebvix based on TCP with noise protocol encryption"
+license = "MIT"
+
+[dependencies]
+zbx-types = { path = "../zbx-types" }
+zbx-crypto = { path = "../zbx-crypto" }
+zbx-consensus = { path = "../zbx-consensus" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "1"
+tokio = { version = "1", features = ["net", "sync", "time", "rt-multi-thread", "io-util", "macros"] }
+tracing = "0.1"
+hex = "0.4"
+bytes = "1"

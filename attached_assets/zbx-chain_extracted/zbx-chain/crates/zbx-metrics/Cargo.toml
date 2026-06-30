@@ -1,0 +1,16 @@
+[package]
+name = "zbx-metrics"
+version = "0.2.0"
+edition = "2021"
+authors = ["Zebvix Technologies Pvt Ltd"]
+description = "Prometheus metrics and observability for Zebvix node"
+license = "MIT"
+
+[dependencies]
+zbx-types = { path = "../zbx-types" }
+serde = { version = "1", features = ["derive"] }
+tracing = "0.1"
+tokio = { version = "1", features = ["net", "time", "rt", "io-util"] }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "io-util", "time"] }

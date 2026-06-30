@@ -1,0 +1,30 @@
+[package]
+name = "zbx-evm"
+version = "0.2.0"
+edition = "2021"
+authors = ["Zebvix Technologies Pvt Ltd"]
+description = "EVM-compatible execution engine for Zebvix (London + Shanghai opcodes)"
+license = "MIT"
+
+[dependencies]
+zbx-types = { path = "../zbx-types" }
+zbx-crypto = { path = "../zbx-crypto" }
+ed25519-dalek = "2"
+serde      = { version = "1", features = ["derive"] }
+thiserror  = "1"
+tracing    = "0.1"
+sha2       = "0.10"
+# Precompile dependencies (EIP-196, EIP-197, EIP-198, EIP-152)
+substrate-bn = "0.6"
+num-bigint   = "0.4"
+num-traits   = "0.2"
+ripemd       = "0.1"
+
+[dev-dependencies]
+# Task #4 (KZG 0x0B precompile tests)
+hex = "0.4"
+bls12_381 = { version = "0.8", features = ["experimental", "pairings"] }
+ff        = "0.13"
+group     = "0.13"
+rand      = "0.8"
+zbx-zvm   = { path = "../zbx-zvm" }

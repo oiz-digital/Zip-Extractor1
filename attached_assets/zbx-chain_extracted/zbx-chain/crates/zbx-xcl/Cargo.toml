@@ -1,0 +1,20 @@
+[package]
+name    = "zbx-xcl"
+version = "0.1.0"
+edition = "2021"
+description = "Native Cross-Chain Layer for Zebvix — trustless, bridge-free interoperability via light-client proofs"
+
+[dependencies]
+zbx-types   = { path = "../zbx-types" }
+zbx-crypto  = { path = "../zbx-crypto" }
+zbx-trie    = { path = "../zbx-trie" }
+zbx-rlp     = { path = "../zbx-rlp" }
+zbx-light   = { path = "../zbx-light" }
+
+tokio       = { version = "1", features = ["sync", "time", "macros", "rt"] }
+sha3        = "0.10"
+serde       = { version = "1", features = ["derive"] }
+serde_json  = "1"
+hex         = "0.4"
+thiserror   = "1"
+tracing     = "0.1"

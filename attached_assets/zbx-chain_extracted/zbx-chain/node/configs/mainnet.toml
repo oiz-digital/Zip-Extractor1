@@ -1,0 +1,142 @@
+# Zebvix Mainnet — production node configuration
+# VPS: 93.127.213.192    RPC: https://rpc.zbx.io  (proxied to 127.0.0.1:8545)
+
+[chain]
+chain_id      = 8989
+genesis_file  = "/etc/zbx/genesis.mainnet.json"
+is_validator  = false
+validator_key = ""
+# Task #4: EIP-4844 KZG point-evaluation precompile (0x0B). The file
+# at this path is the official Ethereum KZG Summoning Ceremony output,
+# committed in-tree (sourced from
+# https://raw.githubusercontent.com/ethereum/c-kzg-4844/main/src/trusted_setup.txt
+# — verified shape: 4096 G1 monomial + 4096 G1 Lagrange + 65 G2 monomial).
+# The node refuses to boot if the file is missing or malformed.
+kzg_trusted_setup_path = "node/configs/trusted_setup.txt"
+
+[storage]
+data_dir       = "/var/lib/zbx-mainnet"
+max_open_files = 4096
+cache_size_mb  = 2048
+
+# Task #15: production trie pruner (zbx_pruner::RocksDbPruner). Mark-and-sweep
+# over Column::TrieNodes; coordination lock blocks sweep during commit.
+[storage.pruner]
+enabled            = true
+interval_secs      = 60
+max_retained_roots = 128
+sweep_batch_size   = 1000
+min_height_advance = 0
+archive_mode       = false
+
+[network]
+listen_addr = "0.0.0.0"
+listen_port = 30303
+max_peers   = 100
+bootnodes   = [
+  "93.127.213.192:30303",
+]
+nat = "any"
+
+[consensus]
+block_time_ms        = 5000
+max_block_gas        = 30000000
+mempool_max_pending  = 10000
+mempool_max_queued   = 5000
+
+[rpc]
+http_enabled    = true
+http_port       = 8545
+ws_enabled      = false   # WebSocket RPC available (zbx_rpc::WsServer); operator opt-in only — set true and proxy 8546 through nginx (wss://) before enabling
+ws_port         = 8546
+# Bind to localhost — nginx terminates TLS and proxies https://rpc.zbx.io → 127.0.0.1:8545
+bind_addr       = "127.0.0.1"
+cors_origins    = ["https://zbx.io", "https://app.zbx.io", "https://wallet.zbx.io"]
+rate_limit_rpm  = 600
+
+[metrics]
+enabled = true
+port    = 9000
+
+# ─── Oracle subsystem (zbx-oracle, ZEP-011) ──────────────────────────────────
+# Decentralized price oracle — Chainlink-style reporter network.
+# Feeds: ZBX/USD, ZUSD/USD, ETH/USD, BTC/USD, BNB/USD, USD/INR
+[oracle]
+enabled              = true
+report_interval_secs = 60      # How often this node submits price reports (if reporter)
+is_reporter          = false   # Set true only on approved oracle reporter nodes
+feeds                = ["ZBX/USD", "ZUSD/USD", "ETH/USD", "BTC/USD", "BNB/USD", "USD/INR"]
+aggregator_address   = "0x0000000000000000000000000000000000006001"
+heartbeat_secs       = 3600    # Max age before a feed is considered stale
+deviation_threshold  = "0.005" # 0.5% price deviation triggers an update
+
+# ─── ERC-4337 Account Abstraction Bundler (zbx-bundler, ZEP-017) ─────────────
+[bundler]
+enabled            = true
+rpc_port           = 4337      # Bundler-specific RPC port (eth_sendUserOperation)
+entry_point        = "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789"
+max_bundle_size    = 50        # Max UserOperations per bundle
+max_userop_gas     = 5000000   # Max gas per UserOperation
+mempool_max        = 1000      # Max pending UserOperations
+simulation_timeout_ms = 5000  # Off-chain simulation timeout
+
+# ─── MEV Protection (zbx-mev) ────────────────────────────────────────────────
+[mev]
+enabled                 = true
+private_pool_enabled    = true   # Layer 1: encrypted tx submission
+commit_reveal_enabled   = true   # Layer 2: commit-reveal ordering
+pbs_enabled             = true   # Layer 3: Proposer-Builder Separation
+redistribution_enabled  = true   # Layer 4: MEV redistribution to stakers
+staker_share_bps        = 3000   # 30% of captured MEV to stakers
+community_share_bps     = 7000   # 70% to community fund
+community_fund_address  = "0x0000000000000000000000000000000000007001"
+
+# ─── Chain Synchronization (zbx-sync) ────────────────────────────────────────
+[sync]
+mode                     = "live"   # "fast", "snap", or "live"
+snap_pivot_lag_blocks    = 128      # Snap-sync pivot = head - lag
+snap_chunk_size_kb       = 1024     # Per-chunk download size for snap-sync
+fast_sync_batch_size     = 64       # Blocks per batch for fast-sync
+max_sync_peers           = 8        # Peers to use during sync
+
+# ─── Data Availability Layer (zbx-da, ZEP-003) ───────────────────────────────
+[da]
+enabled               = true
+blob_prune_enabled    = true
+blob_prune_window     = 518400    # 30 days at 5s blocks
+max_blobs_per_block   = 8
+blob_rpc_enabled      = true      # Expose eth_getBlobSidecarsByBlockHash etc.
+
+# ─── Telemetry (zbx-telemetry) ───────────────────────────────────────────────
+[telemetry]
+enabled          = true
+json_logs        = true
+otlp_endpoint    = ""            # Leave empty to disable OTLP traces (fill for Jaeger/Tempo)
+prometheus_port  = 9001          # Dedicated telemetry Prometheus port (shared with [metrics])
+log_filter       = "info"        # e.g. "info,zbx_consensus=debug"
+
+# ─── XCL Cross-Chain Layer (zbx-xcl, ZEP-026) ────────────────────────────────
+[xcl]
+enabled           = true
+light_client_sync = true   # Sync foreign chain headers for trustless proof verification
+channel_timeout_secs = 3600  # Packet timeout before refund
+
+# ─── Block + Event Indexer (zbx-indexer, ZEP-007) ────────────────────────────
+# Opt-in heavy I/O subsystem. Operators running a block explorer or TVL
+# dashboard should enable this. Disabled by default on validator nodes.
+# REST API: http://localhost:3100/v1/transactions  /v1/tvl/*  /healthz
+[indexer]
+enabled              = false                      # flip to true on archive/explorer nodes
+backend              = "sqlite"                   # "sqlite" | "postgres" (future)
+db_path              = "/var/lib/zbx-mainnet/indexer.db"
+postgres_url         = ""                         # e.g. "postgres://zbx:pass@db:5432/zbxindex"
+api_enabled          = true
+api_port             = 3100
+# TVL oracle: fill in after ZbxTvlOracle.sol is deployed at genesis.
+# Example: tvl_oracle_address = "0x0000000000000000000000000000000000008001"
+tvl_oracle_address   = ""
+tvl_poll_secs        = 60
+batch_size           = 100
+index_traces         = true
+decode_transfers     = true
+writer_threads       = 4

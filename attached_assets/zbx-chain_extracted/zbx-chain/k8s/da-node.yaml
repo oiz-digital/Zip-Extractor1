@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zbx-da-node
+  namespace: zebvix
+  labels:
+    app: zbx-da-node
+    chain: zbx
+    component: da
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: zbx-da-node
+  template:
+    metadata:
+      labels:
+        app: zbx-da-node
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+    spec:
+      containers:
+        - name: da-node
+          image: zebvix/zbx-da-node:latest
+          ports:
+            - containerPort: 8545  # JSON-RPC (blob submission)
+            - containerPort: 9000  # gRPC (DAS requests)
+            - containerPort: 9090  # Prometheus metrics
+          env:
+            - name: ZBX_CHAIN_ID
+              value: "8989"  # mainnet; for testnet+devnet override to "8990"
+            - name: ZBX_DA_KZG_SETUP
+              value: "/etc/zbx/kzg_trusted_setup.json"
+            - name: ZBX_DA_MAX_BLOBS
+              value: "8"
+            - name: ZBX_DA_PRUNE_AFTER
+              value: "518400"
+            - name: ZBX_DA_SAMPLING_COUNT
+              value: "75"
+            - name: ZBX_DA_STORAGE_PATH
+              value: "/data/blobs"
+            - name: RUST_LOG
+              value: "info,zbx_da=debug"
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "2Gi"
+            limits:
+              cpu: "2000m"
+              memory: "8Gi"
+          volumeMounts:
+            - name: blob-storage
+              mountPath: /data/blobs
+            - name: kzg-setup
+              mountPath: /etc/zbx
+              readOnly: true
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8545
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8545
+            initialDelaySeconds: 10
+            periodSeconds: 5
+      volumes:
+        - name: blob-storage
+          persistentVolumeClaim:
+            claimName: zbx-da-blob-pvc
+        - name: kzg-setup
+          configMap:
+            name: zbx-kzg-trusted-setup
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zbx-da-node
+  namespace: zebvix
+spec:
+  selector:
+    app: zbx-da-node
+  ports:
+    - name: rpc
+      port: 8545
+      targetPort: 8545
+    - name: grpc
+      port: 9000
+      targetPort: 9000
+    - name: metrics
+      port: 9090
+      targetPort: 9090
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: zbx-da-blob-pvc
+  namespace: zebvix
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Ti  # 2 TB for blob storage (grows at ~1 GB/day)
+  storageClassName: fast-ssd

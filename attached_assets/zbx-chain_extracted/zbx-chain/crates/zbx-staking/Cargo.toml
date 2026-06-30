@@ -1,0 +1,41 @@
+[package]
+name = "zbx-staking"
+version = "0.2.0"
+edition = "2021"
+authors = ["Zebvix Technologies Pvt Ltd"]
+description = "Proof-of-Stake staking engine for Zebvix — validators, delegation, slashing, rewards"
+license = "MIT"
+
+[dependencies]
+zbx-types = { path = "../zbx-types" }
+zbx-crypto = { path = "../zbx-crypto" }
+# SEC-2026-05-09 Pass-11 — slashing pipeline needs to read
+# EquivocationEvidence emitted by the consensus detector and persist
+# SlashEvidenceRecord through ZbxDb. Both are intentional: zbx-staking
+# is the higher-level slashing-domain crate, and zbx-consensus /
+# zbx-storage are lower-level — no circular dep risk (zbx-consensus
+# does NOT depend on zbx-staking).
+zbx-consensus = { path = "../zbx-consensus" }
+zbx-storage   = { path = "../zbx-storage" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+bincode    = "1"
+thiserror = "1"
+rlp = "0.5"
+tracing = "0.1"
+sha3 = "0.10"
+parking_lot = "0.12"
+
+[dev-dependencies]
+# SEC-2026-05-09 Pass-11 — slashing-pipeline tests need a real
+# RocksDB-backed `ZbxDb` (the in-memory `mem` backend doesn't
+# exercise CF iteration / fsync paths the way production does).
+tempfile = "3"
+# Pass-18 — PoP integration tests need to generate fresh BLS keys.
+rand = "0.8"
+# End-to-end test exercises BlockExecutor::execute_with_staking
+# routing through a real block. Pulled in as dev-dep only.
+zbx-execution = { path = "../zbx-execution" }
+zbx-trie      = { path = "../zbx-trie" }
+zbx-crypto    = { path = "../zbx-crypto" }
+hex = "0.4"

@@ -1,0 +1,92 @@
+# ZBX Block Explorer (Kubernetes)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zbx-explorer
+  namespace: zbx-chain
+  labels:
+    app: zbx-explorer
+    component: explorer
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: zbx-explorer
+  template:
+    metadata:
+      labels:
+        app: zbx-explorer
+    spec:
+      containers:
+        - name: explorer
+          image: zbvix/zbx-explorer:latest
+          ports:
+            - containerPort: 4000   # Explorer web UI
+            - containerPort: 4001   # Explorer API (GraphQL)
+          env:
+            - name: RPC_URL
+              value: "http://zbx-archive:8545"
+            - name: INDEXER_URL
+              value: "http://zbx-indexer:8560"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: zbx-secrets
+                  key: explorer-db-url
+            - name: SECRET_KEY_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: zbx-secrets
+                  key: explorer-secret
+          resources:
+            requests:
+              cpu: "1"
+              memory: "2Gi"
+            limits:
+              cpu: "4"
+              memory: "8Gi"
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 4000
+            initialDelaySeconds: 30
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zbx-explorer
+  namespace: zbx-chain
+spec:
+  selector:
+    app: zbx-explorer
+  ports:
+    - name: web
+      port: 80
+      targetPort: 4000
+    - name: api
+      port: 4001
+      targetPort: 4001
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: zbx-explorer
+  namespace: zbx-chain
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  tls:
+    - hosts: [explorer.zbvix.com]
+      secretName: zbx-explorer-tls
+  rules:
+    - host: explorer.zbvix.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: zbx-explorer
+                port:
+                  number: 80

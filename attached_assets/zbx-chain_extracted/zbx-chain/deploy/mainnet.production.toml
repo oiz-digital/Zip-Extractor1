@@ -1,0 +1,56 @@
+# =============================================================================
+# ZBX Chain — Production Mainnet Configuration
+# Chain ID: 8989  |  Zebvix Chain
+# =============================================================================
+# FILL IN: Replace every FILL_* value before deploying
+# =============================================================================
+
+[chain]
+chain_id    = 8989
+network     = "mainnet"
+block_time  = 5
+
+[node]
+data_dir    = "/var/lib/zbx/mainnet"
+log_level   = "info"
+log_format  = "json"
+
+[rpc]
+http_addr   = "127.0.0.1:8545"
+ws_addr     = "127.0.0.1:8546"
+cors_allow  = "https://FILL_YOUR_DOMAIN.com"
+rate_limit  = 100
+
+[p2p]
+listen_addr = "0.0.0.0:30303"
+max_peers   = 50
+boot_nodes  = [
+  "enode://FILL_VALIDATOR_1_PUBKEY@FILL_VPS1_IP:30303",
+  "enode://FILL_VALIDATOR_2_PUBKEY@FILL_VPS2_IP:30303",
+  "enode://FILL_VALIDATOR_3_PUBKEY@FILL_VPS3_IP:30303",
+  "enode://FILL_VALIDATOR_4_PUBKEY@FILL_VPS4_IP:30303",
+]
+
+[consensus]
+round_timeout_ms = 5000
+
+[mempool]
+max_size         = 100000
+max_per_account  = 64
+min_gas_price    = "1000000000"
+
+[metrics]
+enabled  = true
+addr     = "127.0.0.1:9100"
+
+[storage]
+db_path  = "/var/lib/zbx/mainnet/db"
+cache_mb = 4096
+
+[indexer]
+enabled  = false
+
+[validator]
+key_path     = "/etc/zbx/keys/validator.key"
+bls_key_path = "/etc/zbx/keys/bls.key"
+node_key     = "/etc/zbx/keys/node.key"

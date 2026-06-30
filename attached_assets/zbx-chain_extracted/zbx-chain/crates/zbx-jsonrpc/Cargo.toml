@@ -1,0 +1,22 @@
+[package]
+name = "zbx-jsonrpc"
+version = "0.1.0"
+edition = "2021"
+description = "JSON-RPC 2.0 server with HTTP and WebSocket transport for Zebvix Chain"
+
+[dependencies]
+zbx-types  = { path = "../zbx-types" }
+thiserror  = "1"
+tokio      = { version = "1", features = ["full"] }
+axum       = { version = "0.7", features = ["ws"] }
+tower      = "0.4"
+tower-http = { version = "0.5", features = ["cors", "trace", "limit"] }
+serde      = { version = "1", features = ["derive"] }
+serde_json = "1"
+tracing    = "0.1"
+bytes      = "1"
+futures    = "0.3"
+tokio-tungstenite = "0.21"
+dashmap    = "5"
+uuid       = { version = "1", features = ["v4"] }
+hex        = "0.4"

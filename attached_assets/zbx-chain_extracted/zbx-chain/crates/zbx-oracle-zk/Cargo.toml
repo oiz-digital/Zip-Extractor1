@@ -1,0 +1,26 @@
+[package]
+name        = "zbx-oracle-zk"
+version     = "0.1.0"
+edition     = "2021"
+description = "ZK-proven price oracle (ZEP-012) — SNARK-verified price sources"
+
+[dependencies]
+zbx-oracle  = { path = "../zbx-oracle" }
+zbx-prover  = { path = "../zbx-prover" }
+zbx-types   = { path = "../zbx-types" }
+serde       = { version = "1", features = ["derive"] }
+serde-big-array = "0.5"
+serde_json  = "1"
+thiserror   = "1"
+tracing     = "0.1"
+sha2        = "0.10"
+ark-bn254          = "0.4"     # BN254 curve (Ethereum snark)
+ark-groth16        = "0.4"     # Groth16 proving system
+ark-serialize      = "0.4"
+ark-ff             = "0.4"
+ark-snark          = "0.4"
+ark-relations      = "0.4"     # ConstraintSynthesizer + ConstraintSystemRef
+ark-r1cs-std       = "0.4"     # FpVar, Boolean, AllocVar — circuit gadgets
+k256               = { version = "0.13", features = ["ecdsa"] }
+sha3               = "0.10"    # Keccak-256 for tls_digest derivation
+rand               = "0.8"     # OsRng for Groth16::prove + setup

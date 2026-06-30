@@ -1,0 +1,26 @@
+[package]
+name = "zbx-storage"
+version = "0.2.0"
+edition = "2021"
+authors = ["Zebvix Technologies Pvt Ltd"]
+description = "RocksDB-backed persistent storage for Zebvix blocks, state and receipts"
+license = "MIT"
+
+[dependencies]
+zbx-types = { path = "../zbx-types" }
+zbx-crypto = { path = "../zbx-crypto" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+bincode = "1"
+thiserror = "1"
+tracing = "0.1"
+hex = "0.4"
+rocksdb = "0.22"
+parking_lot = { version = "0.12", features = ["arc_lock"] }
+
+[features]
+default = []
+mem = []  # in-memory backend for tests
+
+[dev-dependencies]
+tempfile = "3"

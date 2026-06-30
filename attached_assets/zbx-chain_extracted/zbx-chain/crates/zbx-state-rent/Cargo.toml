@@ -1,0 +1,11 @@
+[package]
+name    = "zbx-state-rent"
+version = "0.1.0"
+edition = "2021"
+description = "State rent and expiry mechanism (ZEP-008)"
+
+[dependencies]
+zbx-types = { path = "../zbx-types" }
+thiserror = "1"
+serde     = { version = "1", features = ["derive"] }
+tracing   = "0.1"

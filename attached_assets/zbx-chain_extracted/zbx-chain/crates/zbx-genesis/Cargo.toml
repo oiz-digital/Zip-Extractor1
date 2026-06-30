@@ -1,0 +1,15 @@
+[package]
+name    = "zbx-genesis"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+zbx-types   = { path = "../zbx-types" }
+zbx-crypto  = { path = "../zbx-crypto" }
+zbx-trie    = { path = "../zbx-trie" }
+zbx-storage = { path = "../zbx-storage" }
+thiserror   = "1"
+serde       = { version = "1", features = ["derive"] }
+serde_json  = "1"
+hex         = "0.4"
+# zbx-types is already in [dependencies]; no [dev-dependencies] needed for tests.

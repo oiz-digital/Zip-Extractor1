@@ -1,0 +1,20 @@
+[package]
+name = "zbx-trie"
+version = "0.1.0"
+edition = "2021"
+description = "Merkle Patricia Trie implementation for Zebvix Chain state"
+
+[dependencies]
+zbx-types = { path = "../zbx-types" }
+zbx-crypto = { path = "../zbx-crypto" }
+zbx-rlp    = { path = "../zbx-rlp" }
+thiserror  = "1"
+smallvec   = { version = "1", features = ["union", "const_generics"] }
+hashbrown  = "0.14"
+bytes      = "1"
+sha3       = "0.10"
+parking_lot = "0.12"
+
+[dev-dependencies]
+hex        = "0.4"
+proptest   = "1"

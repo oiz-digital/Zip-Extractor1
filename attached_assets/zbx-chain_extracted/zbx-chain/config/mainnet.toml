@@ -1,0 +1,51 @@
+# Mainnet configuration — Zebvix Chain (Chain ID 8989).
+#
+# IMPORTANT: chain_id MUST match `crates/zbx-types/src/lib.rs::CHAIN_ID = 8989`.
+# Mismatches between this file and the Rust constant will be rejected by the
+# genesis loader (`node/src/genesis.rs` META_KEY_CHAIN_ID check). Do NOT bump
+# this value without bumping `zbx-types::CHAIN_ID` and re-running the
+# devnet-launch full reset playbook.
+
+[chain]
+chain_id    = 8989
+network     = "mainnet"
+block_time  = 5
+
+[node]
+data_dir    = "/var/lib/zbx/mainnet"
+log_level   = "info"
+log_format  = "json"
+
+[rpc]
+http_addr   = "0.0.0.0:8545"
+ws_addr     = "0.0.0.0:8546"
+cors_allow  = "https://app.zebvix.com"
+rate_limit  = 100
+
+[p2p]
+listen_addr = "0.0.0.0:30303"
+max_peers   = 50
+boot_nodes  = [
+  "boot1.zebvix.com:30303",
+  "boot2.zebvix.com:30303",
+  "boot3.zebvix.com:30303",
+]
+
+[consensus]
+round_timeout_ms = 10000
+
+[mempool]
+max_size         = 100000
+max_per_account  = 64
+min_gas_price    = "1000000000"   # 1 gwei
+
+[metrics]
+enabled  = true
+addr     = "0.0.0.0:9100"
+
+[storage]
+db_path  = "/var/lib/zbx/mainnet/db"
+cache_mb = 4096
+
+[indexer]
+enabled  = false   # run as separate service

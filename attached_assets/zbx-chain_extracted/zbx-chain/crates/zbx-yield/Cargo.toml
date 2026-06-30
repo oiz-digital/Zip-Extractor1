@@ -1,0 +1,11 @@
+[package]
+name = "zbx-yield"
+version = "0.1.0"
+edition = "2021"
+description = "Yield farming, gauge-weighted reward allocation, and merkle reward distribution for Zebvix Chain."
+
+[dependencies]
+zbx-types  = { path = "../zbx-types" }
+serde      = { version = "1", features = ["derive"] }
+thiserror  = "1"
+sha3       = "0.10"

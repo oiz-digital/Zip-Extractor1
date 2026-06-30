@@ -1,0 +1,24 @@
+{
+  "name": "@zebvix/ethers",
+  "version": "1.2.0",
+  "description": "Ethers.js v6 with ZBX chain extensions — Pay ID, ZUSD, ZVM, Staking, Perps, Vault, Bridge",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --watch",
+    "test": "vitest"
+  },
+  "peerDependencies": {
+    "ethers": "^6.0.0"
+  },
+  "devDependencies": {
+    "ethers": "^6.13.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  },
+  "keywords": ["zebvix", "zbx", "ethers", "blockchain", "pay-id", "zvm"],
+  "license": "MIT"
+}

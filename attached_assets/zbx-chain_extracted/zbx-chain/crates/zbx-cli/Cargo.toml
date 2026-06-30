@@ -1,0 +1,50 @@
+[package]
+name    = "zbx-cli"
+version = "0.1.0"
+edition = "2021"
+description = "zbxctl — Zebvix Chain command-line tool"
+authors = ["Zebvix Labs <team@zebvix.io>"]
+
+[[bin]]
+name = "zbxctl"
+path = "src/main.rs"
+
+[lib]
+name = "zbx_cli"
+path = "src/lib.rs"
+
+[dependencies]
+# CLI framework
+clap   = { version = "4", features = ["derive", "env"] }
+anyhow = "1"
+tokio  = { version = "1", features = ["macros", "rt-multi-thread", "signal"] }
+
+# In-tree primitives we actually depend on. The legacy `zbx-sdk` umbrella
+# crate is intentionally NOT pulled in: this build talks to the keystore
+# directly so the trust boundary is auditable.
+zbx-keystore = { path = "../zbx-keystore" }
+zbx-crypto   = { path = "../zbx-crypto" }
+zbx-types    = { path = "../zbx-types" }
+
+# Minimal HTTP client for read-only JSON-RPC (S17 `defi tvl` subcommand).
+# Restricted to `json` + `rustls-tls`: NO native TLS, NO cookies, NO compression.
+# Read-only by intent (the CLI never signs anything via this path), so the
+# audit-boundary policy in this Cargo.toml's header is preserved.
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+
+# Wallet / crypto helpers
+rpassword = "7"     # password prompt without echo
+hex       = "0.4"
+sha3      = "0.10"  # Keccak256 for EIP-191 message hashing
+url       = "2"     # RPC endpoint scheme validation (T214)
+
+# Config
+dotenv = "0.15"
+
+# Output
+serde       = { version = "1", features = ["derive"] }
+serde_json  = "1"
+
+# Logging
+tracing            = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }

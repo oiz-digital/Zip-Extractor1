@@ -1,0 +1,19 @@
+[package]
+name = "zbx-pruner"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+zbx-primitives = { path = "../zbx-primitives" }
+zbx-types      = { path = "../zbx-types" }
+zbx-storage    = { path = "../zbx-storage" }
+zbx-trie       = { path = "../zbx-trie" }
+zbx-rlp        = { path = "../zbx-rlp" }
+parking_lot    = "0.12"
+tokio          = { version = "1", features = ["rt", "sync", "time", "macros"] }
+tracing        = "0.1"
+rocksdb        = "0.22"
+
+[dev-dependencies]
+tempfile = "3"
+tokio    = { version = "1", features = ["full"] }

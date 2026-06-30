@@ -1,0 +1,20 @@
+[package]
+name    = "zbx-verkle"
+version = "0.1.0"
+edition = "2021"
+description = "Verkle trie state tree for ZBX chain (ZEP-007)"
+
+[dependencies]
+blst         = "0.3"         # BLS12-381 field operations (reused for Verkle)
+sha2         = "0.10"
+sha3         = "0.10"
+hex          = "0.4"
+thiserror    = "1"
+serde        = { version = "1", features = ["derive"] }
+serde_json   = "1"
+tracing      = "0.1"
+rayon        = "1"           # parallel commitment computation
+
+[dev-dependencies]
+criterion    = { version = "0.5", features = ["html_reports"] }
+proptest     = "1"
