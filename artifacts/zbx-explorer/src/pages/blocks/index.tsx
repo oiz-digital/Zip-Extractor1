@@ -2,90 +2,113 @@ import React from "react";
 import { Link } from "wouter";
 import { useGetBlocks } from "@workspace/api-client-react";
 import { formatNumber, timeAgo, formatAddress } from "@/lib/utils";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Blocks as BlocksIcon } from "lucide-react";
 
 export default function Blocks() {
   const [page, setPage] = React.useState(0);
-  const limit = 20;
-  
+  const limit = 25;
   const { data: blocks, isLoading } = useGetBlocks({ limit, offset: page * limit });
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex items-end justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Blocks</h2>
-          <p className="text-muted-foreground">Browse all blocks produced on the Zebvix network.</p>
+          <h2
+            className="text-3xl font-black tracking-tight"
+            style={{
+              background: "linear-gradient(135deg, #00D4FF 0%, #0080FF 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            }}
+          >
+            Blocks
+          </h2>
+          <p className="text-sm mt-1" style={{ color: "rgba(100,116,139,0.9)" }}>
+            All blocks produced on the Zebvix network
+          </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}>
-            <ChevronLeft className="w-4 h-4 mr-1" /> Prev
-          </Button>
-          <span className="text-sm font-mono px-2">Page {page + 1}</span>
-          <Button variant="outline" size="sm" onClick={() => setPage(p => p + 1)} disabled={!blocks || blocks.length < limit}>
-            Next <ChevronRight className="w-4 h-4 ml-1" />
-          </Button>
+          <button
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            disabled={page === 0}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all disabled:opacity-30"
+            style={{ background: "rgba(0,212,255,0.08)", border: "1px solid rgba(0,212,255,0.15)", color: "#00D4FF" }}
+          >
+            <ChevronLeft className="w-3.5 h-3.5" /> Prev
+          </button>
+          <span className="text-xs font-mono px-3 py-1.5 rounded-lg" style={{ background: "rgba(0,212,255,0.04)", color: "#E2E8F0", border: "1px solid rgba(0,212,255,0.08)" }}>
+            Page {page + 1}
+          </span>
+          <button
+            onClick={() => setPage((p) => p + 1)}
+            disabled={!blocks || blocks.length < limit}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all disabled:opacity-30"
+            style={{ background: "rgba(0,212,255,0.08)", border: "1px solid rgba(0,212,255,0.15)", color: "#00D4FF" }}
+          >
+            Next <ChevronRight className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="p-4 space-y-2">
-              {Array.from({ length: 10 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Block</TableHead>
-                  <TableHead>Age</TableHead>
-                  <TableHead>Hash</TableHead>
-                  <TableHead>Proposer</TableHead>
-                  <TableHead>Txs</TableHead>
-                  <TableHead className="text-right">Gas Used</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {blocks?.map((block) => (
-                  <TableRow key={block.number}>
-                    <TableCell className="font-mono">
-                      <Link href={`/blocks/${block.number}`} className="text-primary hover:underline">
+      <div
+        className="rounded-xl overflow-hidden"
+        style={{ background: "rgba(10,22,40,0.7)", border: "1px solid rgba(0,212,255,0.1)", boxShadow: "0 4px 32px rgba(0,0,0,0.5)" }}
+      >
+        {isLoading ? (
+          <div className="p-4 space-y-2">
+            {Array.from({ length: 12 }).map((_, i) => <Skeleton key={i} className="h-11 w-full" />)}
+          </div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr style={{ borderBottom: "1px solid rgba(0,212,255,0.08)" }}>
+                {[["Block","left"],["Age","left"],["Txs","left"],["Hash","left"],["Proposer","left"],["Gas Used","right"],["Gas %","right"]].map(([h, align]) => (
+                  <th key={h} className={`px-5 py-3.5 text-[10px] font-bold uppercase tracking-[0.1em] text-${align}`} style={{ color: "rgba(100,116,139,0.7)" }}>
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {blocks?.map((block) => {
+                const gasUsed = parseFloat(String(block.gasUsed));
+                const gasLimit = parseFloat(String(block.gasLimit));
+                const gasPct = gasLimit > 0 ? (gasUsed / gasLimit) * 100 : 0;
+                return (
+                  <tr key={block.number} className="premium-table-row">
+                    <td className="px-5 py-3">
+                      <Link href={`/blocks/${block.number}`} className="font-mono font-bold text-[13px]" style={{ color: "#00D4FF" }}>
                         {block.number}
                       </Link>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{timeAgo(block.timestamp)}</TableCell>
-                    <TableCell className="font-mono text-xs text-muted-foreground">{formatAddress(block.hash, 8)}</TableCell>
-                    <TableCell className="font-mono text-xs">
-                      <Link href={`/validators/${block.proposer}`} className="hover:underline">
+                    </td>
+                    <td className="px-5 py-3 font-mono text-xs" style={{ color: "rgba(100,116,139,0.8)" }}>{timeAgo(block.timestamp)}</td>
+                    <td className="px-5 py-3 font-mono text-sm font-semibold" style={{ color: "#E2E8F0" }}>{block.txCount}</td>
+                    <td className="px-5 py-3 font-mono text-xs" style={{ color: "rgba(100,116,139,0.6)" }}>{formatAddress(block.hash, 8)}</td>
+                    <td className="px-5 py-3 font-mono text-xs">
+                      <Link href={`/validators/${block.proposer}`} className="hover:underline" style={{ color: "#4ADE80" }}>
                         {formatAddress(block.proposer, 6)}
                       </Link>
-                    </TableCell>
-                    <TableCell>{block.txCount}</TableCell>
-                    <TableCell className="text-right font-mono text-xs">
-                      <div className="flex flex-col items-end">
-                        <span>{formatNumber(block.gasUsed, 0)}</span>
-                        <span className="text-[10px] text-muted-foreground">({((parseFloat(block.gasUsed) / parseFloat(block.gasLimit)) * 100).toFixed(1)}%)</span>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {blocks?.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                      No blocks found.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                    </td>
+                    <td className="px-5 py-3 font-mono text-xs text-right" style={{ color: "rgba(148,163,184,0.8)" }}>{formatNumber(block.gasUsed, 0)}</td>
+                    <td className="px-5 py-3 text-right">
+                      <span className="font-mono text-xs font-bold px-2 py-0.5 rounded" style={{
+                        background: gasPct > 80 ? "rgba(251,113,133,0.12)" : gasPct > 50 ? "rgba(252,211,77,0.12)" : "rgba(74,222,128,0.12)",
+                        color: gasPct > 80 ? "#FB7185" : gasPct > 50 ? "#FCD34D" : "#4ADE80",
+                      }}>
+                        {gasPct.toFixed(1)}%
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+              {blocks?.length === 0 && (
+                <tr><td colSpan={7} className="text-center py-16" style={{ color: "rgba(100,116,139,0.5)" }}>No blocks found.</td></tr>
+              )}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 }

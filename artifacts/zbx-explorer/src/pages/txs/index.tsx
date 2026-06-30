@@ -2,111 +2,117 @@ import React from "react";
 import { Link } from "wouter";
 import { useGetTransactions } from "@workspace/api-client-react";
 import { formatNumber, timeAgo, formatAddress } from "@/lib/utils";
-import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowLeftRight } from "lucide-react";
+
+function TxTypeBadge({ type }: { type: string }) {
+  const map: Record<string, string> = {
+    TRANSFER: "badge-transfer",
+    AI_INFERENCE: "badge-ai",
+    XCL_TRANSFER: "badge-xcl",
+    CONTRACT_CALL: "badge-contract",
+    CONTRACT_CREATION: "badge-contract",
+    STAKE: "badge-defi",
+    UNSTAKE: "badge-defi",
+    SWAP: "badge-defi",
+    GOVERNANCE: "badge-gov",
+  };
+  return (
+    <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase border font-mono ${map[type] ?? "badge-transfer"}`}>
+      {type}
+    </span>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const map: Record<string, { bg: string; color: string }> = {
+    success: { bg: "rgba(74,222,128,0.12)", color: "#4ADE80" },
+    failed: { bg: "rgba(251,113,133,0.12)", color: "#FB7185" },
+    pending: { bg: "rgba(252,211,77,0.12)", color: "#FCD34D" },
+  };
+  const s = map[status] ?? map.pending;
+  return (
+    <span className="font-mono text-[10px] font-bold uppercase px-2 py-0.5 rounded border" style={{ background: s.bg, color: s.color, borderColor: s.color + "40" }}>
+      {status}
+    </span>
+  );
+}
 
 export default function Txs() {
   const [page, setPage] = React.useState(0);
-  const limit = 20;
-  
+  const limit = 25;
   const { data: txs, isLoading } = useGetTransactions({ limit, offset: page * limit });
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex items-end justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Transactions</h2>
-          <p className="text-muted-foreground">Browse all transactions on the Zebvix network.</p>
+          <h2 className="text-3xl font-black tracking-tight" style={{ background: "linear-gradient(135deg, #00D4FF 0%, #0080FF 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+            Transactions
+          </h2>
+          <p className="text-sm mt-1" style={{ color: "rgba(100,116,139,0.9)" }}>All transactions on the Zebvix network</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}>
-            <ChevronLeft className="w-4 h-4 mr-1" /> Prev
-          </Button>
-          <span className="text-sm font-mono px-2">Page {page + 1}</span>
-          <Button variant="outline" size="sm" onClick={() => setPage(p => p + 1)} disabled={!txs || txs.length < limit}>
-            Next <ChevronRight className="w-4 h-4 ml-1" />
-          </Button>
+          <button onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-30"
+            style={{ background: "rgba(0,212,255,0.08)", border: "1px solid rgba(0,212,255,0.15)", color: "#00D4FF" }}>
+            <ChevronLeft className="w-3.5 h-3.5" /> Prev
+          </button>
+          <span className="text-xs font-mono px-3 py-1.5 rounded-lg" style={{ background: "rgba(0,212,255,0.04)", color: "#E2E8F0", border: "1px solid rgba(0,212,255,0.08)" }}>
+            Page {page + 1}
+          </span>
+          <button onClick={() => setPage((p) => p + 1)} disabled={!txs || txs.length < limit}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-30"
+            style={{ background: "rgba(0,212,255,0.08)", border: "1px solid rgba(0,212,255,0.15)", color: "#00D4FF" }}>
+            Next <ChevronRight className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="p-4 space-y-2">
-              {Array.from({ length: 10 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Hash</TableHead>
-                  <TableHead>Block</TableHead>
-                  <TableHead>Age</TableHead>
-                  <TableHead>From / To</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Value</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {txs?.map((tx) => (
-                  <TableRow key={tx.hash}>
-                    <TableCell className="font-mono text-xs">
-                      <Link href={`/txs/${tx.hash}`} className="text-primary hover:underline">
-                        {formatAddress(tx.hash, 8)}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="font-mono text-xs">
-                      <Link href={`/blocks/${tx.blockNumber}`} className="hover:underline">
-                        {tx.blockNumber}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{timeAgo(tx.timestamp)}</TableCell>
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      <div className="flex flex-col gap-1">
-                        <span className="flex gap-2">
-                          <span className="w-4 text-center">F</span>
-                          <Link href={`/address/${tx.from}`} className="hover:text-primary transition-colors">{formatAddress(tx.from, 6)}</Link>
-                        </span>
-                        {tx.to && (
-                          <span className="flex gap-2">
-                            <span className="w-4 text-center">T</span>
-                            <Link href={`/address/${tx.to}`} className="hover:text-primary transition-colors">{formatAddress(tx.to, 6)}</Link>
-                          </span>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-[10px] uppercase">
-                        {tx.type}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={tx.status === 'success' ? 'default' : tx.status === 'failed' ? 'destructive' : 'secondary'} className="text-[10px]">
-                        {tx.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right font-mono text-xs text-foreground">
-                      {formatNumber(tx.value, 4)} ZBX
-                    </TableCell>
-                  </TableRow>
+      <div className="rounded-xl overflow-hidden" style={{ background: "rgba(10,22,40,0.7)", border: "1px solid rgba(0,212,255,0.1)", boxShadow: "0 4px 32px rgba(0,0,0,0.5)" }}>
+        {isLoading ? (
+          <div className="p-4 space-y-2">{Array.from({ length: 12 }).map((_, i) => <Skeleton key={i} className="h-11 w-full" />)}</div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr style={{ borderBottom: "1px solid rgba(0,212,255,0.08)" }}>
+                {[["Hash","left"],["Block","left"],["Age","left"],["From → To","left"],["Type","left"],["Status","left"],["Value","right"]].map(([h, align]) => (
+                  <th key={h} className={`px-5 py-3.5 text-[10px] font-bold uppercase tracking-[0.1em] text-${align}`} style={{ color: "rgba(100,116,139,0.7)" }}>{h}</th>
                 ))}
-                {txs?.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                      No transactions found.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+              </tr>
+            </thead>
+            <tbody>
+              {txs?.map((tx) => (
+                <tr key={tx.hash} className="premium-table-row">
+                  <td className="px-5 py-3">
+                    <Link href={`/txs/${tx.hash}`} className="font-mono text-[12px] font-bold" style={{ color: "#00D4FF" }}>
+                      {formatAddress(tx.hash, 7)}
+                    </Link>
+                  </td>
+                  <td className="px-5 py-3 font-mono text-xs">
+                    <Link href={`/blocks/${tx.blockNumber}`} className="hover:underline" style={{ color: "rgba(148,163,184,0.8)" }}>{tx.blockNumber}</Link>
+                  </td>
+                  <td className="px-5 py-3 font-mono text-xs" style={{ color: "rgba(100,116,139,0.7)" }}>{timeAgo(tx.timestamp)}</td>
+                  <td className="px-5 py-3 font-mono text-xs" style={{ color: "rgba(100,116,139,0.8)" }}>
+                    <div className="flex flex-col gap-0.5">
+                      <span style={{ color: "rgba(148,163,184,0.9)" }}>{formatAddress(tx.from, 6)}</span>
+                      {tx.to && <span style={{ color: "rgba(100,116,139,0.6)" }}>→ {formatAddress(tx.to, 6)}</span>}
+                    </div>
+                  </td>
+                  <td className="px-5 py-3"><TxTypeBadge type={tx.type} /></td>
+                  <td className="px-5 py-3"><StatusBadge status={tx.status} /></td>
+                  <td className="px-5 py-3 text-right font-mono text-xs font-semibold" style={{ color: "#E2E8F0" }}>
+                    {formatNumber(tx.value, 2)} <span style={{ color: "rgba(100,116,139,0.5)" }}>ZBX</span>
+                  </td>
+                </tr>
+              ))}
+              {txs?.length === 0 && (
+                <tr><td colSpan={7} className="text-center py-16" style={{ color: "rgba(100,116,139,0.5)" }}>No transactions found.</td></tr>
+              )}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 }

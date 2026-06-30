@@ -2,120 +2,104 @@ import React from "react";
 import { Link } from "wouter";
 import { useGetProposals } from "@workspace/api-client-react";
 import { timeAgo } from "@/lib/utils";
-import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Gavel } from "lucide-react";
+import { Vote, CheckCircle2, XCircle, Clock, AlertCircle } from "lucide-react";
+
+function StatusBadge({ status }: { status: string }) {
+  const map: Record<string, { bg: string; color: string; icon: React.ElementType }> = {
+    active: { bg: "rgba(0,212,255,0.12)", color: "#00D4FF", icon: Activity },
+    passed: { bg: "rgba(74,222,128,0.12)", color: "#4ADE80", icon: CheckCircle2 },
+    rejected: { bg: "rgba(251,113,133,0.12)", color: "#FB7185", icon: XCircle },
+    pending: { bg: "rgba(252,211,77,0.12)", color: "#FCD34D", icon: Clock },
+    voting: { bg: "rgba(0,212,255,0.12)", color: "#00D4FF", icon: Vote },
+  };
+  const s = map[status.toLowerCase()] ?? map.pending;
+  return (
+    <span className="inline-flex items-center gap-1.5 font-mono text-[11px] font-bold uppercase px-2.5 py-1 rounded-lg border" style={{ background: s.bg, color: s.color, borderColor: s.color + "40" }}>
+      {status}
+    </span>
+  );
+}
+
+function Activity(props: any) { return null; }
+
+function VoteBar({ yes, no, abstain }: { yes: number; no: number; abstain: number }) {
+  const total = yes + no + abstain;
+  if (total === 0) return <div className="h-1.5 rounded-full" style={{ background: "rgba(0,212,255,0.1)" }} />;
+  const yesPct = (yes / total) * 100;
+  const noPct = (no / total) * 100;
+  const abstainPct = (abstain / total) * 100;
+  return (
+    <div>
+      <div className="flex h-2 rounded-full overflow-hidden" style={{ background: "rgba(0,212,255,0.06)" }}>
+        <div style={{ width: `${yesPct}%`, background: "linear-gradient(90deg, #4ADE80, #22C55E)" }} />
+        <div style={{ width: `${noPct}%`, background: "linear-gradient(90deg, #FB7185, #EF4444)" }} />
+        <div style={{ width: `${abstainPct}%`, background: "rgba(252,211,77,0.6)" }} />
+      </div>
+      <div className="flex justify-between mt-1.5 text-[10px] font-mono">
+        <span style={{ color: "#4ADE80" }}>Yes {yesPct.toFixed(1)}%</span>
+        <span style={{ color: "#FB7185" }}>No {noPct.toFixed(1)}%</span>
+        <span style={{ color: "#FCD34D" }}>Abstain {abstainPct.toFixed(1)}%</span>
+      </div>
+    </div>
+  );
+}
 
 export default function Governance() {
   const { data: proposals, isLoading } = useGetProposals();
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'active': return 'default';
-      case 'passed': return 'outline'; // typically custom green, outline is fine
-      case 'rejected': return 'destructive';
-      case 'pending': return 'secondary';
-      default: return 'secondary';
-    }
-  };
-
-  const calculatePercentage = (yes: string, no: string, abstain: string) => {
-    const y = parseFloat(yes) || 0;
-    const n = parseFloat(no) || 0;
-    const a = parseFloat(abstain) || 0;
-    const total = y + n + a;
-    if (total === 0) return { yes: 0, no: 0, abstain: 0 };
-    return {
-      yes: (y / total) * 100,
-      no: (n / total) * 100,
-      abstain: (a / total) * 100
-    };
-  };
-
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-          <Gavel className="text-primary w-6 h-6" /> Governance (ZEPs)
+        <h2 className="text-3xl font-black tracking-tight" style={{ background: "linear-gradient(135deg, #FB923C 0%, #FCD34D 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+          Governance (ZEPs)
         </h2>
-        <p className="text-muted-foreground">Zebvix Evolution Proposals and on-chain voting.</p>
+        <p className="text-sm mt-1" style={{ color: "rgba(100,116,139,0.9)" }}>Zebvix Evolution Proposals — on-chain voting and protocol upgrades</p>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="p-4 space-y-4">
-              {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-24 w-full" />)}
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-16">ID</TableHead>
-                  <TableHead>Proposal</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="w-[300px]">Voting Results</TableHead>
-                  <TableHead className="text-right">End Time</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {proposals?.map((proposal) => {
-                  const pct = calculatePercentage(proposal.yesVotes, proposal.noVotes, proposal.abstainVotes);
-                  return (
-                    <TableRow key={proposal.id}>
-                      <TableCell className="font-mono text-sm font-bold text-muted-foreground">
-                        {proposal.zepNumber ? `ZEP-${proposal.zepNumber}` : `#${proposal.id}`}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col gap-1">
-                          <Link href={`/governance/${proposal.id}`} className="font-bold text-base hover:text-primary transition-colors">
-                            {proposal.title}
-                          </Link>
-                          <Badge variant="outline" className="w-fit text-[10px] uppercase bg-muted/50">{proposal.type}</Badge>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getStatusColor(proposal.status)} className="uppercase text-[10px]">
-                          {proposal.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1.5 w-full">
-                          <div className="flex w-full h-2 bg-muted rounded-full overflow-hidden">
-                            <div style={{ width: `${pct.yes}%` }} className="bg-green-500 h-full" />
-                            <div style={{ width: `${pct.no}%` }} className="bg-destructive h-full" />
-                            <div style={{ width: `${pct.abstain}%` }} className="bg-yellow-500 h-full" />
-                          </div>
-                          <div className="flex justify-between text-[10px] font-mono text-muted-foreground">
-                            <span className="text-green-500">Y: {pct.yes.toFixed(1)}%</span>
-                            <span className="text-destructive">N: {pct.no.toFixed(1)}%</span>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right text-xs">
-                        <div className="flex flex-col items-end">
-                          <span className="font-medium">{new Date(proposal.endTime).toLocaleDateString()}</span>
-                          <span className="text-muted-foreground">{timeAgo(proposal.endTime)}</span>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-                {proposals?.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                      No proposals found.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      <div className="space-y-3">
+        {isLoading
+          ? Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-xl" />)
+          : proposals?.map((proposal) => {
+              const yes = parseFloat(String(proposal.yesVotes)) || 0;
+              const no = parseFloat(String(proposal.noVotes)) || 0;
+              const abstain = parseFloat(String(proposal.abstainVotes)) || 0;
+              const zepId = proposal.zepNumber ? `ZEP-${proposal.zepNumber}` : `#${proposal.id}`;
+              return (
+                <div
+                  key={proposal.id}
+                  className="rounded-xl p-5 transition-all duration-200"
+                  style={{ background: "rgba(10,22,40,0.7)", border: "1px solid rgba(0,212,255,0.08)", boxShadow: "0 2px 16px rgba(0,0,0,0.4)" }}
+                >
+                  <div className="flex flex-col md:flex-row md:items-start gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="font-mono text-sm font-black" style={{ color: "#FB923C" }}>{zepId}</span>
+                        <StatusBadge status={proposal.status} />
+                        <span className="ml-auto text-xs font-mono" style={{ color: "rgba(100,116,139,0.5)" }}>
+                          Ends {new Date(proposal.endTime).toLocaleDateString()} · {timeAgo(proposal.endTime)}
+                        </span>
+                      </div>
+                      <Link href={`/governance/${proposal.id}`} className="font-bold text-lg hover:underline block mb-1" style={{ color: "#E2E8F0" }}>
+                        {proposal.title}
+                      </Link>
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded font-mono" style={{ background: "rgba(251,146,60,0.12)", color: "#FB923C" }}>
+                        {proposal.type}
+                      </span>
+                    </div>
+                    <div className="md:w-72 flex-shrink-0">
+                      <VoteBar yes={yes} no={no} abstain={abstain} />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+        {!isLoading && (!proposals || proposals.length === 0) && (
+          <div className="text-center py-20 rounded-xl" style={{ border: "1px dashed rgba(0,212,255,0.15)", color: "rgba(100,116,139,0.5)" }}>
+            No proposals found.
+          </div>
+        )}
+      </div>
     </div>
   );
 }

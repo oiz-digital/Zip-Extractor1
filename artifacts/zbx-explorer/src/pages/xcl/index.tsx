@@ -2,11 +2,50 @@ import React from "react";
 import { Link } from "wouter";
 import { useGetXclStats, useGetXclTransfers } from "@workspace/api-client-react";
 import { formatNumber, formatCurrency, timeAgo, formatAddress } from "@/lib/utils";
-import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Link as LinkIcon, Activity, Globe, Clock, ArrowRight } from "lucide-react";
+import { GitBranch, Activity, Globe, Clock, ArrowRight } from "lucide-react";
+
+function StatCard({ label, value, icon: Icon, iconStyle, loading }: any) {
+  return (
+    <div className="rounded-xl p-5 flex items-center gap-4 card-glow" style={{ background: "linear-gradient(135deg, rgba(10,22,40,0.9) 0%, rgba(6,13,26,0.95) 100%)" }}>
+      <div className="p-3 rounded-xl flex-shrink-0" style={iconStyle}><Icon className="w-5 h-5" /></div>
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: "rgba(100,116,139,0.9)" }}>{label}</p>
+        {loading ? <Skeleton className="h-7 w-28 mt-1" /> : (
+          <p className="text-2xl font-black font-mono tracking-tight mt-0.5" style={{ color: "#E2E8F0" }}>{value}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const chainColors: Record<string, string> = {
+  Ethereum: "#627EEA", Bitcoin: "#F7931A", Cosmos: "#2E3148", Solana: "#9945FF",
+  Avalanche: "#E84142", Polygon: "#8247E5", BSC: "#F3BA2F", ZBX: "#00D4FF",
+};
+
+function ChainBadge({ name }: { name: string }) {
+  const color = chainColors[name] || "#00D4FF";
+  return (
+    <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded border" style={{ background: color + "15", color, borderColor: color + "40" }}>
+      {name}
+    </span>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const map: Record<string, { bg: string; color: string }> = {
+    finalized: { bg: "rgba(74,222,128,0.12)", color: "#4ADE80" },
+    pending: { bg: "rgba(252,211,77,0.12)", color: "#FCD34D" },
+    failed: { bg: "rgba(251,113,133,0.12)", color: "#FB7185" },
+  };
+  const s = map[status] ?? map.pending;
+  return (
+    <span className="font-mono text-[10px] font-bold uppercase px-2 py-0.5 rounded border" style={{ background: s.bg, color: s.color, borderColor: s.color + "40" }}>
+      {status}
+    </span>
+  );
+}
 
 export default function Xcl() {
   const { data: stats, isLoading: statsLoading } = useGetXclStats();
@@ -15,123 +54,62 @@ export default function Xcl() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-          <LinkIcon className="text-primary w-6 h-6" /> Cross-Chain (XCL)
+        <h2 className="text-3xl font-black tracking-tight" style={{ background: "linear-gradient(135deg, #67E8F9 0%, #00D4FF 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+          Cross-Chain (XCL)
         </h2>
-        <p className="text-muted-foreground">Native trustless bridging and cross-chain message passing.</p>
+        <p className="text-sm mt-1" style={{ color: "rgba(100,116,139,0.9)" }}>Native trustless bridging and cross-chain message passing</p>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="p-3 bg-primary/10 text-primary rounded-lg"><Activity className="w-5 h-5" /></div>
-            <div>
-              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Total Transfers</p>
-              <h3 className="text-xl font-bold font-mono">
-                {statsLoading ? <Skeleton className="h-7 w-24" /> : formatNumber(stats?.totalTransfers || 0, 0)}
-              </h3>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="p-3 bg-primary/10 text-primary rounded-lg"><Globe className="w-5 h-5" /></div>
-            <div>
-              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">24h Volume</p>
-              <h3 className="text-xl font-bold font-mono">
-                {statsLoading ? <Skeleton className="h-7 w-24" /> : formatCurrency(stats?.volume24h || 0)}
-              </h3>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="p-3 bg-primary/10 text-primary rounded-lg"><LinkIcon className="w-5 h-5" /></div>
-            <div>
-              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Connected Chains</p>
-              <h3 className="text-xl font-bold font-mono">
-                {statsLoading ? <Skeleton className="h-7 w-12" /> : stats?.supportedChains || 0}
-              </h3>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="p-3 bg-primary/10 text-primary rounded-lg"><Clock className="w-5 h-5" /></div>
-            <div>
-              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Avg Finality</p>
-              <h3 className="text-xl font-bold font-mono">
-                {statsLoading ? <Skeleton className="h-7 w-24" /> : `${formatNumber(stats?.avgFinalizationTime || 0, 1)}s`}
-              </h3>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard label="Total Transfers" value={statsLoading ? "—" : formatNumber(stats?.totalTransfers || 0, 0)}
+          icon={Activity} iconStyle={{ background: "rgba(103,232,249,0.12)", color: "#67E8F9", boxShadow: "0 0 12px rgba(103,232,249,0.2)" }} loading={statsLoading} />
+        <StatCard label="24h Volume" value={statsLoading ? "—" : formatCurrency(stats?.volume24h || 0)}
+          icon={Globe} iconStyle={{ background: "rgba(0,212,255,0.12)", color: "#00D4FF", boxShadow: "0 0 12px rgba(0,212,255,0.2)" }} loading={statsLoading} />
+        <StatCard label="Connected Chains" value={statsLoading ? "—" : String(stats?.supportedChains || 0)}
+          icon={GitBranch} iconStyle={{ background: "rgba(139,92,246,0.12)", color: "#A78BFA", boxShadow: "0 0 12px rgba(139,92,246,0.2)" }} loading={statsLoading} />
+        <StatCard label="Avg Finality" value={statsLoading ? "—" : `${formatNumber(stats?.avgFinalizationTime || 0, 1)}s`}
+          icon={Clock} iconStyle={{ background: "rgba(74,222,128,0.1)", color: "#4ADE80", boxShadow: "0 0 12px rgba(74,222,128,0.15)" }} loading={statsLoading} />
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          {transfersLoading ? (
-            <div className="p-4 space-y-2">
-              {Array.from({ length: 10 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Tx Hash</TableHead>
-                  <TableHead>Age</TableHead>
-                  <TableHead>Path</TableHead>
-                  <TableHead>Asset</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                  <TableHead>Proof</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {transfers?.map((tx) => (
-                  <TableRow key={tx.id}>
-                    <TableCell className="font-mono text-xs">
-                      <Link href={`/txs/${tx.txHash}`} className="text-primary hover:underline">
-                        {formatAddress(tx.txHash, 6)}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{timeAgo(tx.timestamp)}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2 text-xs font-semibold">
-                        <Badge variant="outline" className="bg-muted text-[10px]">{tx.sourceChain}</Badge>
-                        <ArrowRight className="w-3 h-3 text-muted-foreground" />
-                        <Badge variant="outline" className="bg-muted text-[10px]">{tx.destChain}</Badge>
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-bold">{tx.asset}</TableCell>
-                    <TableCell className="text-right font-mono text-sm">{formatNumber(tx.amount, 4)}</TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant={
-                        tx.status === 'finalized' ? 'default' : 
-                        tx.status === 'failed' ? 'destructive' : 
-                        'secondary'
-                      } className="text-[10px] uppercase">
-                        {tx.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground uppercase">{tx.proofType || 'SPV'}</TableCell>
-                  </TableRow>
+      <div className="rounded-xl overflow-hidden" style={{ background: "rgba(10,22,40,0.7)", border: "1px solid rgba(0,212,255,0.1)", boxShadow: "0 4px 32px rgba(0,0,0,0.5)" }}>
+        {transfersLoading ? (
+          <div className="p-4 space-y-2">{Array.from({ length: 10 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr style={{ borderBottom: "1px solid rgba(0,212,255,0.08)" }}>
+                {[["Tx Hash","left"],["Age","left"],["Path","left"],["Asset","left"],["Amount","right"],["Status","left"],["Proof","left"]].map(([h, a]) => (
+                  <th key={h} className={`px-5 py-3.5 text-[10px] font-bold uppercase tracking-[0.1em] text-${a}`} style={{ color: "rgba(100,116,139,0.7)" }}>{h}</th>
                 ))}
-                {transfers?.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                      No recent transfers.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+              </tr>
+            </thead>
+            <tbody>
+              {transfers?.map((tx) => (
+                <tr key={tx.id} className="premium-table-row">
+                  <td className="px-5 py-3">
+                    <Link href={`/txs/${tx.txHash}`} className="font-mono text-[12px] font-bold" style={{ color: "#00D4FF" }}>{formatAddress(tx.txHash, 6)}</Link>
+                  </td>
+                  <td className="px-5 py-3 font-mono text-xs" style={{ color: "rgba(100,116,139,0.7)" }}>{timeAgo(tx.timestamp)}</td>
+                  <td className="px-5 py-3">
+                    <div className="flex items-center gap-2">
+                      <ChainBadge name={tx.sourceChain} />
+                      <ArrowRight className="w-3 h-3" style={{ color: "rgba(100,116,139,0.5)" }} />
+                      <ChainBadge name={tx.destChain} />
+                    </div>
+                  </td>
+                  <td className="px-5 py-3 font-bold text-sm" style={{ color: "#E2E8F0" }}>{tx.asset}</td>
+                  <td className="px-5 py-3 text-right font-mono text-sm font-semibold" style={{ color: "#E2E8F0" }}>{formatNumber(tx.amount, 4)}</td>
+                  <td className="px-5 py-3"><StatusBadge status={tx.status} /></td>
+                  <td className="px-5 py-3 font-mono text-xs uppercase" style={{ color: "rgba(100,116,139,0.6)" }}>{tx.proofType || "SPV"}</td>
+                </tr>
+              ))}
+              {transfers?.length === 0 && (
+                <tr><td colSpan={7} className="text-center py-16" style={{ color: "rgba(100,116,139,0.5)" }}>No recent transfers.</td></tr>
+              )}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 }
