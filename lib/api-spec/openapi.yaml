@@ -1,22 +1,45 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: ZBX Chain Explorer API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: network
+    description: Network stats and overview
+  - name: blocks
+    description: Block explorer
+  - name: transactions
+    description: Transaction explorer
+  - name: validators
+    description: Validator and staking info
+  - name: defi
+    description: DeFi protocols (AMM, Lending, Perps)
+  - name: ai
+    description: On-chain AI inference
+  - name: xcl
+    description: Cross-chain layer
+  - name: oracle
+    description: Price oracle feeds
+  - name: governance
+    description: ZEP governance proposals
+  - name: nft
+    description: NFT and gaming
+  - name: payid
+    description: PayID resolution
+  - name: mempool
+    description: Mempool and pending transactions
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +47,857 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /network/stats:
+    get:
+      operationId: getNetworkStats
+      tags: [network]
+      summary: Get overall network statistics
+      responses:
+        "200":
+          description: Network stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NetworkStats"
+
+  /network/overview:
+    get:
+      operationId: getNetworkOverview
+      tags: [network]
+      summary: Live network overview (TPS, block time, finality)
+      responses:
+        "200":
+          description: Network overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NetworkOverview"
+
+  /blocks:
+    get:
+      operationId: getBlocks
+      tags: [blocks]
+      summary: List recent blocks
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0 }
+      responses:
+        "200":
+          description: List of blocks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Block"
+
+  /blocks/{blockNumber}:
+    get:
+      operationId: getBlock
+      tags: [blocks]
+      summary: Get block by number
+      parameters:
+        - name: blockNumber
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Block detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlockDetail"
+        "404":
+          description: Block not found
+
+  /transactions:
+    get:
+      operationId: getTransactions
+      tags: [transactions]
+      summary: List recent transactions
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0 }
+        - name: type
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: List of transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Transaction"
+
+  /transactions/{hash}:
+    get:
+      operationId: getTransaction
+      tags: [transactions]
+      summary: Get transaction by hash
+      parameters:
+        - name: hash
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Transaction detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionDetail"
+        "404":
+          description: Transaction not found
+
+  /validators:
+    get:
+      operationId: getValidators
+      tags: [validators]
+      summary: List all validators
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string, enum: [active, inactive, jailed] }
+      responses:
+        "200":
+          description: Validator list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Validator"
+
+  /validators/stats:
+    get:
+      operationId: getValidatorStats
+      tags: [validators]
+      summary: Get staking and validator aggregate stats
+      responses:
+        "200":
+          description: Staking stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidatorStats"
+
+  /validators/{address}:
+    get:
+      operationId: getValidator
+      tags: [validators]
+      summary: Get validator details
+      parameters:
+        - name: address
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Validator detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidatorDetail"
+        "404":
+          description: Validator not found
+
+  /defi/pools:
+    get:
+      operationId: getAmmPools
+      tags: [defi]
+      summary: List AMM liquidity pools
+      responses:
+        "200":
+          description: AMM pools
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AmmPool"
+
+  /defi/lending:
+    get:
+      operationId: getLendingMarkets
+      tags: [defi]
+      summary: List lending markets
+      responses:
+        "200":
+          description: Lending markets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LendingMarket"
+
+  /defi/perps:
+    get:
+      operationId: getPerpMarkets
+      tags: [defi]
+      summary: List perpetual markets
+      responses:
+        "200":
+          description: Perp markets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PerpMarket"
+
+  /defi/stats:
+    get:
+      operationId: getDefiStats
+      tags: [defi]
+      summary: DeFi aggregate stats (TVL, volume, etc)
+      responses:
+        "200":
+          description: DeFi stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefiStats"
+
+  /ai/models:
+    get:
+      operationId: getAiModels
+      tags: [ai]
+      summary: List available on-chain AI models
+      responses:
+        "200":
+          description: AI models
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AiModel"
+
+  /ai/inferences:
+    get:
+      operationId: getAiInferences
+      tags: [ai]
+      summary: Recent AI inference transactions
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
+      responses:
+        "200":
+          description: AI inference list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AiInference"
+
+  /ai/stats:
+    get:
+      operationId: getAiStats
+      tags: [ai]
+      summary: On-chain AI usage statistics
+      responses:
+        "200":
+          description: AI stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiStats"
+
+  /xcl/transfers:
+    get:
+      operationId: getXclTransfers
+      tags: [xcl]
+      summary: List cross-chain transfers
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
+        - name: chain
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Cross-chain transfers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/XclTransfer"
+
+  /xcl/stats:
+    get:
+      operationId: getXclStats
+      tags: [xcl]
+      summary: Cross-chain layer statistics
+      responses:
+        "200":
+          description: XCL stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/XclStats"
+
+  /oracle/prices:
+    get:
+      operationId: getOraclePrices
+      tags: [oracle]
+      summary: Get all oracle price feeds
+      responses:
+        "200":
+          description: Price feeds
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OraclePrice"
+
+  /governance/proposals:
+    get:
+      operationId: getProposals
+      tags: [governance]
+      summary: List governance proposals (ZEPs)
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string, enum: [active, passed, rejected, pending] }
+      responses:
+        "200":
+          description: Proposals list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Proposal"
+
+  /governance/proposals/{id}:
+    get:
+      operationId: getProposal
+      tags: [governance]
+      summary: Get ZEP proposal detail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Proposal detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProposalDetail"
+
+  /nft/collections:
+    get:
+      operationId: getNftCollections
+      tags: [nft]
+      summary: List NFT collections
+      responses:
+        "200":
+          description: NFT collections
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NftCollection"
+
+  /nft/gaming:
+    get:
+      operationId: getGamingProjects
+      tags: [nft]
+      summary: List on-chain gaming projects
+      responses:
+        "200":
+          description: Gaming projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GamingProject"
+
+  /payid/resolve/{payid}:
+    get:
+      operationId: resolvePayId
+      tags: [payid]
+      summary: Resolve a PayID to an address
+      parameters:
+        - name: payid
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Resolved address
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PayIdResolution"
+        "404":
+          description: PayID not found
+
+  /mempool/pending:
+    get:
+      operationId: getMempoolTxs
+      tags: [mempool]
+      summary: List pending mempool transactions
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
+      responses:
+        "200":
+          description: Pending transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MempoolTx"
+
+  /mempool/stats:
+    get:
+      operationId: getMempoolStats
+      tags: [mempool]
+      summary: Get mempool statistics
+      responses:
+        "200":
+          description: Mempool stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MempoolStats"
+
 components:
   schemas:
     HealthStatus:
       type: object
       properties:
-        status:
-          type: string
-      required:
-        - status
+        status: { type: string }
+      required: [status]
 
+    NetworkStats:
+      type: object
+      required: [blockHeight, totalTxs, totalAddresses, totalValidators, marketCap, circulatingSupply, totalSupply, chainId, networkName]
+      properties:
+        blockHeight: { type: integer }
+        totalTxs: { type: integer }
+        totalAddresses: { type: integer }
+        totalValidators: { type: integer }
+        marketCap: { type: string }
+        circulatingSupply: { type: string }
+        totalSupply: { type: string }
+        chainId: { type: integer }
+        networkName: { type: string }
+        avgBlockTime: { type: number }
+        avgGasPrice: { type: string }
+
+    NetworkOverview:
+      type: object
+      required: [tps, blockTime, finalityTime, activeValidators, epochNumber, epochProgress, peerCount, uptime]
+      properties:
+        tps: { type: number }
+        blockTime: { type: number }
+        finalityTime: { type: number }
+        activeValidators: { type: integer }
+        epochNumber: { type: integer }
+        epochProgress: { type: number }
+        peerCount: { type: integer }
+        uptime: { type: number }
+        consensusRound: { type: integer }
+
+    Block:
+      type: object
+      required: [number, hash, timestamp, txCount, proposer, gasUsed, gasLimit, size]
+      properties:
+        number: { type: integer }
+        hash: { type: string }
+        timestamp: { type: string }
+        txCount: { type: integer }
+        proposer: { type: string }
+        gasUsed: { type: string }
+        gasLimit: { type: string }
+        size: { type: integer }
+        parentHash: { type: string }
+        stateRoot: { type: string }
+
+    BlockDetail:
+      type: object
+      required: [number, hash, timestamp, txCount, proposer, gasUsed, gasLimit, size, parentHash, stateRoot, transactionsRoot, receiptsRoot, difficulty, totalDifficulty, nonce]
+      properties:
+        number: { type: integer }
+        hash: { type: string }
+        timestamp: { type: string }
+        txCount: { type: integer }
+        proposer: { type: string }
+        gasUsed: { type: string }
+        gasLimit: { type: string }
+        size: { type: integer }
+        parentHash: { type: string }
+        stateRoot: { type: string }
+        transactionsRoot: { type: string }
+        receiptsRoot: { type: string }
+        difficulty: { type: string }
+        totalDifficulty: { type: string }
+        nonce: { type: string }
+        extraData: { type: string }
+        baseFeePerGas: { type: string }
+        transactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Transaction"
+
+    Transaction:
+      type: object
+      required: [hash, blockNumber, timestamp, from, status, value, gasPrice, gasUsed, type]
+      properties:
+        hash: { type: string }
+        blockNumber: { type: integer }
+        timestamp: { type: string }
+        from: { type: string }
+        to: { type: ["string", "null"] }
+        status: { type: string, enum: [success, failed, pending] }
+        value: { type: string }
+        gasPrice: { type: string }
+        gasUsed: { type: string }
+        type: { type: string }
+        nonce: { type: integer }
+
+    TransactionDetail:
+      type: object
+      required: [hash, blockNumber, timestamp, from, status, value, gasPrice, gasUsed, type, nonce, input, logs]
+      properties:
+        hash: { type: string }
+        blockNumber: { type: integer }
+        timestamp: { type: string }
+        from: { type: string }
+        to: { type: ["string", "null"] }
+        status: { type: string }
+        value: { type: string }
+        gasPrice: { type: string }
+        gasUsed: { type: string }
+        gasLimit: { type: string }
+        type: { type: string }
+        nonce: { type: integer }
+        input: { type: string }
+        logs:
+          type: array
+          items: { type: object }
+        contractAddress: { type: ["string", "null"] }
+        effectiveGasPrice: { type: string }
+        cumulativeGasUsed: { type: string }
+
+    Validator:
+      type: object
+      required: [address, moniker, votingPower, commission, status, uptime, delegators]
+      properties:
+        address: { type: string }
+        moniker: { type: string }
+        votingPower: { type: string }
+        commission: { type: number }
+        status: { type: string }
+        uptime: { type: number }
+        delegators: { type: integer }
+        selfStake: { type: string }
+        totalStake: { type: string }
+        rank: { type: integer }
+        website: { type: ["string", "null"] }
+        description: { type: ["string", "null"] }
+
+    ValidatorStats:
+      type: object
+      required: [totalStaked, totalValidators, activeValidators, bondedRatio, annualizedReward, nextEpochIn]
+      properties:
+        totalStaked: { type: string }
+        totalValidators: { type: integer }
+        activeValidators: { type: integer }
+        bondedRatio: { type: number }
+        annualizedReward: { type: number }
+        nextEpochIn: { type: integer }
+        slashingEvents: { type: integer }
+
+    ValidatorDetail:
+      type: object
+      required: [address, moniker, votingPower, commission, status, uptime, delegators, selfStake, totalStake, rank]
+      properties:
+        address: { type: string }
+        moniker: { type: string }
+        votingPower: { type: string }
+        commission: { type: number }
+        status: { type: string }
+        uptime: { type: number }
+        delegators: { type: integer }
+        selfStake: { type: string }
+        totalStake: { type: string }
+        rank: { type: integer }
+        website: { type: ["string", "null"] }
+        description: { type: ["string", "null"] }
+        blocksProposed: { type: integer }
+        blocksSignedLast100: { type: integer }
+        recentBlocks:
+          type: array
+          items: { type: integer }
+
+    AmmPool:
+      type: object
+      required: [id, token0, token1, tvl, volume24h, fee, apy, txCount]
+      properties:
+        id: { type: string }
+        token0: { type: string }
+        token1: { type: string }
+        tvl: { type: string }
+        volume24h: { type: string }
+        fee: { type: number }
+        apy: { type: number }
+        txCount: { type: integer }
+        token0Reserve: { type: string }
+        token1Reserve: { type: string }
+        priceToken0: { type: string }
+        priceToken1: { type: string }
+
+    LendingMarket:
+      type: object
+      required: [asset, totalSupply, totalBorrow, supplyApy, borrowApy, utilization, collateralFactor]
+      properties:
+        asset: { type: string }
+        totalSupply: { type: string }
+        totalBorrow: { type: string }
+        supplyApy: { type: number }
+        borrowApy: { type: number }
+        utilization: { type: number }
+        collateralFactor: { type: number }
+        liquidationThreshold: { type: number }
+        price: { type: string }
+
+    PerpMarket:
+      type: object
+      required: [symbol, price, change24h, volume24h, openInterest, fundingRate, maxLeverage]
+      properties:
+        symbol: { type: string }
+        price: { type: string }
+        change24h: { type: number }
+        volume24h: { type: string }
+        openInterest: { type: string }
+        fundingRate: { type: number }
+        maxLeverage: { type: integer }
+        longShortRatio: { type: number }
+
+    DefiStats:
+      type: object
+      required: [totalTvl, totalVolume24h, totalProtocols, ammTvl, lendingTvl, perpVolume24h]
+      properties:
+        totalTvl: { type: string }
+        totalVolume24h: { type: string }
+        totalProtocols: { type: integer }
+        ammTvl: { type: string }
+        lendingTvl: { type: string }
+        perpVolume24h: { type: string }
+        yieldTvl: { type: string }
+
+    AiModel:
+      type: object
+      required: [id, name, type, description, inferenceCount, accuracy, gasPerInference, quantization]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        type: { type: string }
+        description: { type: string }
+        inferenceCount: { type: integer }
+        accuracy: { type: number }
+        gasPerInference: { type: string }
+        quantization: { type: string }
+        inputSize: { type: integer }
+        outputSize: { type: integer }
+        modelSize: { type: string }
+
+    AiInference:
+      type: object
+      required: [txHash, blockNumber, timestamp, modelId, modelName, caller, gasUsed, result, confidence]
+      properties:
+        txHash: { type: string }
+        blockNumber: { type: integer }
+        timestamp: { type: string }
+        modelId: { type: string }
+        modelName: { type: string }
+        caller: { type: string }
+        gasUsed: { type: string }
+        result: { type: string }
+        confidence: { type: number }
+
+    AiStats:
+      type: object
+      required: [totalInferences, inferencesLast24h, uniqueCallers, topModel, avgGasPerInference, totalGasSpent]
+      properties:
+        totalInferences: { type: integer }
+        inferencesLast24h: { type: integer }
+        uniqueCallers: { type: integer }
+        topModel: { type: string }
+        avgGasPerInference: { type: string }
+        totalGasSpent: { type: string }
+
+    XclTransfer:
+      type: object
+      required: [id, txHash, sourceChain, destChain, asset, amount, status, timestamp, sender, receiver]
+      properties:
+        id: { type: string }
+        txHash: { type: string }
+        sourceChain: { type: string }
+        destChain: { type: string }
+        asset: { type: string }
+        amount: { type: string }
+        status: { type: string, enum: [pending, relayed, finalized, failed] }
+        timestamp: { type: string }
+        sender: { type: string }
+        receiver: { type: string }
+        proofType: { type: string }
+
+    XclStats:
+      type: object
+      required: [totalTransfers, volume24h, supportedChains, activeRelayers, avgFinalizationTime]
+      properties:
+        totalTransfers: { type: integer }
+        volume24h: { type: string }
+        supportedChains: { type: integer }
+        activeRelayers: { type: integer }
+        avgFinalizationTime: { type: number }
+
+    OraclePrice:
+      type: object
+      required: [pair, price, change24h, high24h, low24h, volume24h, sources, lastUpdated]
+      properties:
+        pair: { type: string }
+        price: { type: string }
+        change24h: { type: number }
+        high24h: { type: string }
+        low24h: { type: string }
+        volume24h: { type: string }
+        sources: { type: integer }
+        lastUpdated: { type: string }
+        deviation: { type: number }
+
+    Proposal:
+      type: object
+      required: [id, title, status, proposer, yesVotes, noVotes, abstainVotes, endTime, type]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        status: { type: string }
+        proposer: { type: string }
+        yesVotes: { type: string }
+        noVotes: { type: string }
+        abstainVotes: { type: string }
+        endTime: { type: string }
+        type: { type: string }
+        summary: { type: string }
+        zepNumber: { type: ["integer", "null"] }
+
+    ProposalDetail:
+      type: object
+      required: [id, title, status, proposer, yesVotes, noVotes, abstainVotes, endTime, type, description, changes]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        status: { type: string }
+        proposer: { type: string }
+        yesVotes: { type: string }
+        noVotes: { type: string }
+        abstainVotes: { type: string }
+        endTime: { type: string }
+        type: { type: string }
+        description: { type: string }
+        zepNumber: { type: ["integer", "null"] }
+        summary: { type: string }
+        changes:
+          type: array
+          items: { type: string }
+        voters:
+          type: array
+          items:
+            type: object
+
+    NftCollection:
+      type: object
+      required: [id, name, symbol, totalSupply, floorPrice, volume24h, owners, verified]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        symbol: { type: string }
+        totalSupply: { type: integer }
+        floorPrice: { type: string }
+        volume24h: { type: string }
+        owners: { type: integer }
+        verified: { type: boolean }
+        contractAddress: { type: string }
+        description: { type: string }
+        category: { type: string }
+
+    GamingProject:
+      type: object
+      required: [id, name, category, players, txLast24h, totalRevenue, onChain]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        category: { type: string }
+        players: { type: integer }
+        txLast24h: { type: integer }
+        totalRevenue: { type: string }
+        onChain: { type: boolean }
+        description: { type: string }
+        features:
+          type: array
+          items: { type: string }
+
+    PayIdResolution:
+      type: object
+      required: [payid, address, network]
+      properties:
+        payid: { type: string }
+        address: { type: string }
+        network: { type: string }
+        registered: { type: string }
+        txCount: { type: integer }
+        balance: { type: string }
+
+    MempoolTx:
+      type: object
+      required: [hash, from, nonce, gasPrice, gasLimit, value, type, addedAt]
+      properties:
+        hash: { type: string }
+        from: { type: string }
+        to: { type: ["string", "null"] }
+        nonce: { type: integer }
+        gasPrice: { type: string }
+        gasLimit: { type: string }
+        value: { type: string }
+        type: { type: string }
+        addedAt: { type: string }
+
+    MempoolStats:
+      type: object
+      required: [pendingCount, queuedCount, avgGasPrice, minGasPrice, maxGasPrice]
+      properties:
+        pendingCount: { type: integer }
+        queuedCount: { type: integer }
+        avgGasPrice: { type: string }
+        minGasPrice: { type: string }
+        maxGasPrice: { type: string }
+        oldestTxAge: { type: integer }
